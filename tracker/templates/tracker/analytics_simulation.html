@@ -1,0 +1,1255 @@
+{% extends 'tracker/base.html' %}
+{% block title %}What-If Simulation Cockpit — Digital Twin AI{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8 min-w-0">
+
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-twin-card via-slate-900 to-twin-card p-6 rounded-2xl border border-twin-border shadow-xl min-w-0">
+    <div class="min-w-0">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/30 rounded-full text-[11px] font-bold text-purple-400 uppercase tracking-widest mb-2">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> 4-Scenario Forward Trajectory Sandbox
+      </div>
+      <h1 class="text-2xl font-black text-white tracking-tight">What-If Simulation Engine</h1>
+      <p class="text-slate-400 text-xs mt-1">Multi-scenario 90-day forward behavioral & financial projections with algorithmic advisory.</p>
+    </div>
+
+    {% if has_data %}
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="px-5 py-3 bg-twin-cardInner rounded-2xl border border-slate-800 text-right">
+        <div class="text-[10px] uppercase font-bold text-slate-400">Projection Horizon</div>
+        <div class="text-xl font-black text-purple-400 font-mono">{{ horizon_days }} Days</div>
+        <span class="text-[10px] text-emerald-400 font-medium"><i class="fa-solid fa-shield-halved mr-1"></i> 100% In-Memory Sandbox</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not has_data %}
+  <!-- Empty State -->
+  <div class="p-12 text-center bg-twin-card border border-twin-border rounded-2xl space-y-4 min-w-0">
+    <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-800/80 flex items-center justify-center text-purple-400 text-2xl shadow">
+      <i class="fa-solid fa-chart-line"></i>
+    </div>
+    <h3 class="text-base font-bold text-white">No Telemetry Recorded Yet</h3>
+    <p class="text-slate-400 text-xs max-w-md mx-auto">
+      Forward simulation requires historical telemetry baselines. Please log daily activity or upload telemetry records to activate the sandbox engine.
+    </p>
+    <div class="flex items-center justify-center gap-3 pt-2">
+      <a href="{% url 'dashboard' %}" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-slate-950 rounded-xl text-xs font-bold transition">
+        <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Telemetry Hub
+      </a>
+      <a href="{% url 'daily_entry' %}" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition">
+        <i class="fa-solid fa-pen-to-square mr-1.5"></i> Manual Daily Log
+      </a>
+    </div>
+  </div>
+  {% else %}
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 1: TOP ZONE — INTERACTIVE WHAT-IF COCKPIT                            -->
+  <!-- ========================================================================= -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full min-w-0">
+    
+    <!-- Left Column: Multi-Lever Interactive Cockpit (7 Cols) -->
+    <div class="lg:col-span-7 min-w-0 p-6 rounded-2xl bg-twin-card border border-twin-border shadow-xl space-y-5 flex flex-col justify-between">
+      <div class="space-y-4">
+        
+        <!-- Header & Presets Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-twin-border min-w-0">
+          <div class="min-w-0">
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-purple-400"></i> Interactive Simulation Cockpit
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Tune lifestyle & economic levers to project alternate virtual trajectories in real-time.</p>
+          </div>
+
+          <!-- 4 Universal Profile-Scaled Presets -->
+          <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+            <span class="text-[10px] text-slate-500 uppercase font-bold mr-1">Presets:</span>
+            <button type="button" onclick="applyPreset('controlled')" title="-10% spend, +1h study, 7.5h sleep, 6.5h screen" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cyan-950/60 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900/60 transition">
+              Controlled Tuning
+            </button>
+            <button type="button" onclick="applyPreset('aggressive')" title="-20% spend, +15% side income, +2h study, 8h sleep" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900/60 transition">
+              Aggressive
+            </button>
+            <button type="button" onclick="applyPreset('sprint')" title="+30% side income, +2h work, +2h study, 6h sleep, sprint ON" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-950/60 text-amber-300 border border-amber-500/40 hover:bg-amber-900/60 transition">
+              Startup Sprint
+            </button>
+            <button type="button" onclick="applyPreset('shock')" title="+25% spend surge, 5.5h sleep, 11h screen, 35% emergency shock Day 30" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-950/60 text-rose-300 border border-rose-500/40 hover:bg-rose-900/60 transition">
+              Stress Shock
+            </button>
+          </div>
+        </div>
+
+        <!-- Two-Tab Controller Header -->
+        <div class="flex items-center gap-2 pt-2 border-b border-slate-800/80 min-w-0">
+          <button type="button" id="tab-btn-financial" onclick="switchControlTab('financial')"
+            class="px-4 py-2 text-xs font-bold border-b-2 border-emerald-400 text-emerald-400 transition flex items-center gap-2">
+            <i class="fa-solid fa-coins"></i> Financial Levers
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">Profile Scaled</span>
+          </button>
+          <button type="button" id="tab-btn-cognitive" onclick="switchControlTab('cognitive')"
+            class="px-4 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+            <i class="fa-solid fa-brain"></i> Cognitive & Routine Levers
+            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">Fatigue Lags</span>
+          </button>
+        </div>
+
+        <!-- PANEL A: FINANCIAL LEVERS (With Live Rupee Calculation in Badge based on user profile) -->
+        <div id="panel-financial" class="space-y-4 pt-2 min-w-0">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
+            
+            <!-- Slider 1: Discretionary Spend Adjustment -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-wallet text-cyan-400 mr-1.5"></i> Spend Adjustment</span>
+                <span id="badge-spend" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-cyan-950/80 text-cyan-400 border border-cyan-500/30 shrink-0">
+                  -10% (Thrift)
+                </span>
+              </div>
+              <input type="range" id="slider-spend" min="-30" max="30" step="1" value="-10"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400 block"
+                oninput="handleSpendSliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>-30% Thrift</span>
+                <span>0% Baseline</span>
+                <span>+30% Surge</span>
+              </div>
+            </div>
+
+            <!-- Slider 2: Monthly Side Hustle Boost (0 to 50% of income) -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-arrow-trend-up text-emerald-400 mr-1.5"></i> Side Hustle Boost</span>
+                <span id="badge-side-income" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                  0% (None)
+                </span>
+              </div>
+              <input type="range" id="slider-side-income" min="0" max="50" step="5" value="0"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-400 block"
+                oninput="handleSideIncomeSliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>0% None</span>
+                <span>25% Moderate</span>
+                <span>50% Max</span>
+              </div>
+            </div>
+
+            <!-- Slider 3: Emergency Cash Shock (0 to 80% of budget) -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-triangle-exclamation text-rose-400 mr-1.5"></i> Emergency Cash Shock</span>
+                <span id="badge-shock" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                  0% (No Shock)
+                </span>
+              </div>
+              <input type="range" id="slider-shock" min="0" max="80" step="5" value="0"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-400 block"
+                oninput="handleShockSliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>0% None</span>
+                <span>35% Standard Shock</span>
+                <span>80% Catastrophic</span>
+              </div>
+            </div>
+
+            <!-- Slider 4: Shock Trigger Day (Day 1 to 90) -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-calendar-day text-amber-400 mr-1.5"></i> Shock Trigger Day</span>
+                <span id="badge-shock-day" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-amber-950/80 text-amber-400 border border-amber-500/30 shrink-0">
+                  Day 30 of 90
+                </span>
+              </div>
+              <input type="range" id="slider-shock-day" min="1" max="90" step="1" value="30"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-400 block"
+                oninput="handleShockDaySliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>Day 1</span>
+                <span>Day 30 (Month 1)</span>
+                <span>Day 90</span>
+              </div>
+            </div>
+
+            <!-- Slider 5: Fixed Bills Inflation (0% to 20%) -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 sm:col-span-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-file-invoice-dollar text-indigo-400 mr-1.5"></i> Fixed Bills Inflation</span>
+                <span id="badge-inflation" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                  0% (Stable)
+                </span>
+              </div>
+              <input type="range" id="slider-inflation" min="0" max="20" step="1" value="0"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-400 block"
+                oninput="handleInflationSliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>0% Stable</span>
+                <span>+10% Moderate Inflation</span>
+                <span>+20% High Overhead</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- PANEL B: COGNITIVE & ROUTINE LEVERS -->
+        <div id="panel-cognitive" class="space-y-4 pt-2 hidden min-w-0">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
+            
+            <!-- Slider 6: Daily Study Shift -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-graduation-cap text-purple-400 mr-1.5"></i> Study Shift</span>
+                <span id="badge-study" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-purple-950/80 text-purple-400 border border-purple-500/30 shrink-0">
+                  +1.0h / day
+                </span>
+              </div>
+              <input type="range" id="slider-study" min="-2.0" max="4.0" step="0.5" value="1.0"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-400 block"
+                oninput="handleStudySliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>-2.0h Deficit</span>
+                <span>0.0h Baseline</span>
+                <span>+4.0h Intensive</span>
+              </div>
+            </div>
+
+            <!-- Slider 7: Nightly Sleep Target -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-moon text-indigo-400 mr-1.5"></i> Sleep Target</span>
+                <span id="badge-sleep" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-indigo-950/80 text-indigo-400 border border-indigo-500/30 shrink-0">
+                  7.5h Sleep
+                </span>
+              </div>
+              <input type="range" id="slider-sleep" min="4.0" max="10.0" step="0.5" value="7.5"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-400 block"
+                oninput="handleSleepSliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>4.0h Acute Deprivation</span>
+                <span>7.0h Baseline</span>
+                <span>10.0h Recovery</span>
+              </div>
+            </div>
+
+            <!-- Slider 8: Daily Overtime / Workload Shift -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-briefcase text-blue-400 mr-1.5"></i> Overtime Shift</span>
+                <span id="badge-work" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                  +0.0h Overtime
+                </span>
+              </div>
+              <input type="range" id="slider-work" min="-2.0" max="4.0" step="0.5" value="0.0"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-400 block"
+                oninput="handleWorkSliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>-2.0h Less</span>
+                <span>0.0h Standard</span>
+                <span>+4.0h Crunch</span>
+              </div>
+            </div>
+
+            <!-- Slider 9: Screen Time Ceiling -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 space-y-2 min-w-0">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <span class="font-bold text-slate-300 truncate"><i class="fa-solid fa-display text-rose-400 mr-1.5"></i> Screen Time Cap</span>
+                <span id="badge-screen" class="font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-rose-950/80 text-rose-400 border border-rose-500/30 shrink-0">
+                  6.5h Ceiling
+                </span>
+              </div>
+              <input type="range" id="slider-screen" min="4.0" max="12.0" step="0.5" value="6.5"
+                class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-400 block"
+                oninput="handleScreenSliderChange(this.value)">
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span>4.0h Minimal</span>
+                <span>7.0h Baseline</span>
+                <span>12.0h Heavy Exhaustion</span>
+              </div>
+            </div>
+
+            <!-- Toggle 10: 14-Day Sprint Crunch Toggle Checkbox -->
+            <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800/80 sm:col-span-2 flex items-center justify-between gap-4 min-w-0">
+              <div class="space-y-0.5 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-xs text-white flex items-center gap-1.5 truncate">
+                    <i class="fa-solid fa-bolt-lightning text-amber-400"></i> 14-Day Sprint Crunch Window
+                  </span>
+                  <span id="badge-sprint" class="font-mono font-bold px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                    Standard Pacing (Off)
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-400">Simulates high-velocity startup crunch between Days 20–34 (+2h work, -1h sleep, +1.5 stress).</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="toggle-sprint" class="sr-only peer" onchange="handleSprintToggleChange(this.checked)">
+                <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-twin-border min-w-0">
+        <div class="text-[11px] text-slate-400 flex items-center gap-1.5 min-w-0">
+          <i class="fa-solid fa-shield-check text-emerald-400 shrink-0"></i>
+          <span class="truncate">100% In-Memory Sandbox. Zero database mutations.</span>
+        </div>
+        <button type="button" id="btn-simulate" onclick="executeSimulation()"
+          class="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2 shrink-0">
+          <i class="fa-solid fa-arrows-rotate text-[11px]"></i> Recalculate Simulation
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Column: Dedicated "Live Custom Impact" Card (5 Cols) -->
+    <div class="lg:col-span-5 min-w-0 p-6 rounded-2xl bg-gradient-to-br from-amber-950/30 via-twin-card to-twin-card border-2 border-amber-500/50 shadow-2xl shadow-amber-950/30 flex flex-col justify-between space-y-5">
+      <div class="space-y-4 min-w-0">
+        
+        <div class="flex items-center justify-between min-w-0">
+          <span class="px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5 shrink-0">
+            <i class="fa-solid fa-chart-line"></i> Live Custom Impact
+          </span>
+          <span class="text-[11px] text-amber-400/90 font-bold font-mono flex items-center shrink-0">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block mr-1.5 animate-pulse"></span> Amber Curve
+          </span>
+        </div>
+
+        <div>
+          <h3 class="text-base font-black text-white tracking-tight">Your Projected 90-Day Delta</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Real-time cumulative variance generated from your active multi-lever settings.</p>
+        </div>
+
+        <!-- Big Highlight Metric: Net Capital -->
+        <div class="p-4 rounded-xl bg-slate-900/90 border border-amber-500/30 space-y-1 min-w-0">
+          <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Net Capital Impact (vs Baseline)</span>
+          <div id="custom-savings-delta" class="text-3xl lg:text-4xl font-black font-mono {% if '-' in custom_impact.net_savings_formatted %}text-rose-400{% else %}text-amber-400{% endif %}">
+            {{ custom_impact.net_savings_formatted }}
+          </div>
+          <span class="text-[10px] text-slate-500 font-medium block">Exact rupee-for-rupee cash flow conservation (Inflows - Outflows + Yield)</span>
+        </div>
+
+        <!-- 2-Grid: Focus Stamina & Burnout Risk -->
+        <div class="grid grid-cols-2 gap-3 min-w-0">
+          <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 min-w-0">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block truncate">Focus Stamina Shift</span>
+            <div id="custom-focus-delta" class="text-xl font-black font-mono {% if '-' in custom_impact.focus_formatted %}text-rose-400{% else %}text-cyan-400{% endif %}">
+              {{ custom_impact.focus_formatted }}
+            </div>
+            <span class="text-[9px] text-slate-500 block truncate">Cognitive readiness index</span>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 min-w-0">
+            <span class="text-[9px] uppercase font-bold text-slate-400 block truncate">Burnout Risk Status</span>
+            <div id="custom-burnout-risk" class="text-base font-black flex items-center gap-1.5 {% if custom_impact.burnout_risk_level == 'Low' %}text-emerald-400{% elif custom_impact.burnout_risk_level == 'Moderate' %}text-amber-400{% else %}text-rose-400{% endif %}">
+              <i class="fa-solid fa-heart-pulse text-xs shrink-0"></i> <span class="truncate">{{ custom_impact.burnout_risk_level }} Risk</span>
+            </div>
+            <span class="text-[9px] text-slate-500 block truncate">Fatigue & stress pacing</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2 min-w-0">
+        <i class="fa-solid fa-circle-info text-amber-400 shrink-0"></i>
+        <span class="truncate">Renders dynamically in the charts below as the bold <strong>Gold/Amber (#f59e0b)</strong> forward trajectory.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 2: MIDDLE ZONE — 4-CURVE CHART VISUALIZERS (CHART.JS)               -->
+  <!-- ========================================================================= -->
+  <div class="space-y-6 w-full min-w-0">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+      <div class="min-w-0">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-emerald-400"></i> Comparative Multi-Scenario Visualizer
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">Direct visual comparison across Status Quo, Controlled Target, Stress Shock, and Your Custom Scenario.</p>
+      </div>
+
+      <!-- Chart Legend Pills -->
+      <div class="flex flex-wrap items-center gap-3 text-xs font-medium shrink-0">
+        <span class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-800/60 border border-slate-700/50">
+          <span class="w-3 h-0.5 border-t border-dashed border-slate-400"></span> <span class="text-slate-400">Baseline</span>
+        </span>
+        <span class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/50 border border-amber-500/40">
+          <span class="w-3.5 h-1.5 bg-amber-400 rounded-sm"></span> <span class="text-amber-400 font-bold">YOUR CUSTOM SCENARIO</span>
+        </span>
+        <span class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-cyan-950/40 border border-cyan-500/30">
+          <span class="w-3 h-1 bg-cyan-400 rounded"></span> <span class="text-cyan-400 font-semibold">Scenario A (Controlled)</span>
+        </span>
+        <span class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-950/40 border border-rose-500/30">
+          <span class="w-3 h-1 bg-rose-400 rounded"></span> <span class="text-rose-400 font-semibold">Scenario B (Risk Shock)</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- 2 Main Interactive Charts (Wealth & Focus) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full min-w-0">
+      
+      <!-- Chart 1: Cumulative Wealth Projection -->
+      <div class="p-5 rounded-2xl bg-twin-card border border-twin-border shadow-xl min-w-0">
+        <div class="flex items-center justify-between mb-4 min-w-0">
+          <div class="min-w-0">
+            <h3 class="text-sm font-bold text-white truncate">90-Day Cumulative Wealth Projection (₹)</h3>
+            <p class="text-[11px] text-slate-400 truncate">Net cumulative savings over time ($Savings = Inflows - Expenses + Yield$).</p>
+          </div>
+          <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-bold font-mono shrink-0">
+            Amber = Custom
+          </span>
+        </div>
+        <div class="relative h-72 w-full min-w-0">
+          <canvas id="wealthChart" class="block w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Cognitive Focus & Stamina Trajectory -->
+      <div class="p-5 rounded-2xl bg-twin-card border border-twin-border shadow-xl min-w-0">
+        <div class="flex items-center justify-between mb-4 min-w-0">
+          <div class="min-w-0">
+            <h3 class="text-sm font-bold text-white truncate">Cognitive Focus & Stamina Trajectory</h3>
+            <p class="text-[11px] text-slate-400 truncate">Dynamic cognitive readiness score tracking sleep debt, sprint crunches & fatigue lags.</p>
+          </div>
+          <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded font-bold font-mono shrink-0">
+            Autoregressive
+          </span>
+        </div>
+        <div class="relative h-72 w-full min-w-0">
+          <canvas id="focusChart" class="block w-full h-full"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Chart 3: Cross-Impact Trade-Off Bar Chart -->
+    <div class="p-5 rounded-2xl bg-twin-card border border-twin-border shadow-xl w-full min-w-0">
+      <div class="flex items-center justify-between mb-4 min-w-0">
+        <div class="min-w-0">
+          <h3 class="text-sm font-bold text-white truncate">Cross-Impact Trade-Off Analysis</h3>
+          <p class="text-[11px] text-slate-400 truncate">Comparative Net Capital Shift (₹) vs Cognitive Stamina Shift (%) across all scenarios.</p>
+        </div>
+        <span class="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded font-bold font-mono shrink-0">
+          Dual-Axis Delta
+        </span>
+      </div>
+      <div class="relative h-72 w-full min-w-0">
+        <canvas id="crossImpactChart" class="block w-full h-full"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- ZONE 3: BOTTOM ZONE — PRESCRIPTIVE GUIDANCE CARDS & TAKEAWAY             -->
+  <!-- ========================================================================= -->
+  <div class="space-y-5 w-full min-w-0">
+    <div class="flex items-center justify-between min-w-0">
+      <div class="min-w-0">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-compass text-cyan-400"></i> Prescriptive Advisory Protocol
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">Deterministic, rule-based algorithmic guidance derived directly from forward simulation variances.</p>
+      </div>
+      <span class="text-[11px] text-slate-500 shrink-0">Calibrated Pacing Probabilities</span>
+    </div>
+
+    <!-- 3 Advisory Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 w-full min-w-0" id="advisory-cards-container">
+      {% for card in advisory_cards %}
+      <div id="card-{{ card.case_type|slugify }}" class="p-5 rounded-2xl bg-twin-card border transition-all duration-300 shadow-xl flex flex-col justify-between space-y-4 min-w-0
+        {% if card.case_type == 'Best-Case' %}border-emerald-500/50 bg-gradient-to-b from-emerald-950/20 via-twin-card to-twin-card shadow-emerald-950/20 hover:border-emerald-400
+        {% elif card.case_type == 'Risk-Case' %}border-rose-500/50 bg-gradient-to-b from-rose-950/20 via-twin-card to-twin-card shadow-rose-950/20 hover:border-rose-400
+        {% else %}border-cyan-500/40 bg-gradient-to-b from-cyan-950/20 via-twin-card to-twin-card shadow-cyan-950/20 hover:border-cyan-400{% endif %}">
+        
+        <div class="space-y-3 min-w-0">
+          <div class="flex items-center justify-between min-w-0">
+            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border {{ card.badge_class }} shrink-0">
+              {{ card.case_type }}
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono truncate">{{ card.budget_breach_label }}</span>
+          </div>
+
+          <div>
+            <h3 class="text-base font-black text-white tracking-tight">{{ card.title }}</h3>
+            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">{{ card.description }}</p>
+          </div>
+
+          <!-- KPI Pill Badges -->
+          <div class="grid grid-cols-2 gap-2 pt-2 min-w-0">
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 min-w-0">
+              <span class="text-[9px] uppercase font-bold text-slate-400 block truncate">Capital Impact</span>
+              <span class="text-xs font-black font-mono truncate block {% if '-' in card.financial_delta_label %}text-rose-400{% else %}text-emerald-400{% endif %}">
+                {{ card.financial_delta_label }}
+              </span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 min-w-0">
+              <span class="text-[9px] uppercase font-bold text-slate-400 block truncate">Cognitive Impact</span>
+              <span class="text-xs font-black font-mono truncate block {% if '-' in card.productivity_delta_label %}text-rose-400{% else %}text-cyan-400{% endif %}">
+                {{ card.productivity_delta_label }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Prescriptive Action Steps -->
+          <div class="space-y-2 pt-2 border-t border-slate-800/80 min-w-0">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Action Protocol:</span>
+            <ul class="space-y-2 text-xs text-slate-300">
+              {% for step in card.action_steps %}
+              <li class="flex items-start gap-2 min-w-0">
+                <i class="fa-solid fa-circle-check text-[11px] mt-0.5 shrink-0 {% if card.case_type == 'Best-Case' %}text-emerald-400{% elif card.case_type == 'Risk-Case' %}text-rose-400{% else %}text-cyan-400{% endif %}"></i>
+                <span class="leading-snug break-words min-w-0">{{ step }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 min-w-0">
+          <span class="truncate"><i class="fa-solid fa-heart-pulse text-rose-400 mr-1"></i> {{ card.burnout_label }}</span>
+          <span class="font-mono font-bold text-slate-300 shrink-0">₹{{ card.summary_metrics.weekly_expense_cap|floatformat:0 }}/wk</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Plain-English Takeaway Footer Banner -->
+    <div class="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-twin-card to-slate-900 border border-slate-700/60 shadow-xl flex items-start gap-3.5 w-full min-w-0">
+      <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0 text-base shadow">
+        <i class="fa-solid fa-lightbulb"></i>
+      </div>
+      <div class="space-y-1 min-w-0">
+        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Plain-English Digital Twin Takeaway</h4>
+        <p id="plain-english-text" class="text-xs md:text-sm text-slate-300 leading-relaxed font-medium">
+          {{ plain_english_takeaway }}
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT CONTROLLER: CHART.JS & ADAPTIVE LIVE COCKPIT                   -->
+  <!-- ========================================================================= -->
+  <script>
+    // Profile-scaled financial ground truth from Django context
+    const userBudget = Number({{ user_budget_json|safe }});
+    const userIncome = Number({{ user_income_json|safe }});
+
+    // Date formatting helper: strictly renders e.g. "Sep 14, 2026"
+    function formatChartDate(isoStr) {
+      if (!isoStr) return '';
+      const parts = isoStr.split('-');
+      if (parts.length === 3) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const m = months[parseInt(parts[1], 10) - 1];
+        return `${m} ${parseInt(parts[2], 10)}, ${parts[0]}`;
+      }
+      return isoStr;
+    }
+
+    // Initial serialized series from Django context
+    const rawDates = {{ sim_dates_json|safe }};
+    let simDates = rawDates.map(formatChartDate);
+
+    const baselineSavings = {{ baseline_savings_json|safe }};
+    const customSavings = {{ custom_savings_json|safe }};
+    const caseASavings = {{ case_a_savings_json|safe }};
+    const caseBSavings = {{ case_b_savings_json|safe }};
+
+    const baselineFocus = {{ baseline_focus_json|safe }};
+    const customFocus = {{ custom_focus_json|safe }};
+    const caseAFocus = {{ case_a_focus_json|safe }};
+    const caseBFocus = {{ case_b_focus_json|safe }};
+
+    // Deltas for Bar Chart
+    let deltaCustom_Savings = {{ deltas.custom_scenario.net_savings_delta|default:0.0 }};
+    let deltaA_Savings = {{ deltas.scenario_a.net_savings_delta|default:0.0 }};
+    let deltaB_Savings = {{ deltas.scenario_b.net_savings_delta|default:0.0 }};
+
+    let deltaCustom_Focus = {{ deltas.custom_scenario.focus_pct_gained|default:0.0 }};
+    let deltaA_Focus = {{ deltas.scenario_a.focus_pct_gained|default:0.0 }};
+    let deltaB_Focus = {{ deltas.scenario_b.focus_pct_gained|default:0.0 }};
+
+    // Chart.js Shared Dark Theme Defaults
+    const chartGridColor = '#1e293b';
+    const chartTickColor = '#94a3b8';
+
+    // -------------------------------------------------------------------------
+    // 1. WEALTH CHART (4 Trajectories, Glowing Amber Custom Line Prominent)
+    // -------------------------------------------------------------------------
+    const ctxWealth = document.getElementById('wealthChart').getContext('2d');
+    const wealthChart = new Chart(ctxWealth, {
+      type: 'line',
+      data: {
+        labels: simDates,
+        datasets: [
+          {
+            label: 'Baseline (Status Quo)',
+            data: baselineSavings,
+            borderColor: '#64748b',
+            borderDash: [5, 5],
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0.2
+          },
+          {
+            label: 'YOUR CUSTOM SCENARIO',
+            data: customSavings,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+            borderWidth: 3.5,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            fill: true,
+            tension: 0.2
+          },
+          {
+            label: 'Scenario A (Controlled)',
+            data: caseASavings,
+            borderColor: '#22d3ee',
+            borderWidth: 1.8,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0.2
+          },
+          {
+            label: 'Scenario B (Risk Shock)',
+            data: caseBSavings,
+            borderColor: '#f43f5e',
+            borderWidth: 1.8,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0.2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: {
+            grid: { color: chartGridColor },
+            ticks: { color: chartTickColor, font: { size: 10 }, maxTicksLimit: 12 }
+          },
+          y: {
+            grid: { color: chartGridColor },
+            ticks: {
+              color: chartTickColor,
+              font: { size: 10 },
+              callback: (val) => '₹' + Number(val).toLocaleString()
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ₹${Number(ctx.parsed.y).toLocaleString()}`
+            }
+          }
+        }
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // 2. FOCUS CHART (4 Trajectories)
+    // -------------------------------------------------------------------------
+    const ctxFocus = document.getElementById('focusChart').getContext('2d');
+    const focusChart = new Chart(ctxFocus, {
+      type: 'line',
+      data: {
+        labels: simDates,
+        datasets: [
+          {
+            label: 'Baseline (Status Quo)',
+            data: baselineFocus,
+            borderColor: '#64748b',
+            borderDash: [4, 4],
+            borderWidth: 1.8,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0.25
+          },
+          {
+            label: 'YOUR CUSTOM SCENARIO',
+            data: customFocus,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+            borderWidth: 3.5,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            fill: true,
+            tension: 0.25
+          },
+          {
+            label: 'Scenario A (Controlled)',
+            data: caseAFocus,
+            borderColor: '#38bdf8',
+            borderWidth: 1.8,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0.25
+          },
+          {
+            label: 'Scenario B (Risk Shock)',
+            data: caseBFocus,
+            borderColor: '#fb7185',
+            borderWidth: 1.8,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            fill: false,
+            tension: 0.25
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: {
+            grid: { color: chartGridColor },
+            ticks: { color: chartTickColor, font: { size: 10 }, maxTicksLimit: 12 }
+          },
+          y: {
+            min: 20,
+            max: 100,
+            grid: { color: chartGridColor },
+            ticks: { color: chartTickColor, font: { size: 10 }, callback: (val) => val + '%' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}% Score`
+            }
+          }
+        }
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // 3. CROSS-IMPACT BAR CHART (Custom Scenario vs Benchmarks)
+    // -------------------------------------------------------------------------
+    const ctxCross = document.getElementById('crossImpactChart').getContext('2d');
+    const crossImpactChart = new Chart(ctxCross, {
+      type: 'bar',
+      data: {
+        labels: ['Your Custom Scenario', 'Scenario A (Controlled)', 'Scenario B (Risk Shock)'],
+        datasets: [
+          {
+            label: 'Net Capital Shift (₹)',
+            data: [deltaCustom_Savings, deltaA_Savings, deltaB_Savings],
+            backgroundColor: [
+              deltaCustom_Savings >= 0 ? '#f59e0b' : '#f43f5e',
+              deltaA_Savings >= 0 ? '#10b981' : '#f43f5e',
+              deltaB_Savings >= 0 ? '#10b981' : '#f43f5e'
+            ],
+            borderRadius: 8,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Cognitive Shift (%)',
+            data: [deltaCustom_Focus, deltaA_Focus, deltaB_Focus],
+            backgroundColor: [
+              deltaCustom_Focus >= 0 ? '#06b6d4' : '#f43f5e',
+              deltaA_Focus >= 0 ? '#06b6d4' : '#f43f5e',
+              deltaB_Focus >= 0 ? '#06b6d4' : '#f43f5e'
+            ],
+            borderRadius: 8,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            grid: { color: chartGridColor },
+            ticks: { color: '#e2e8f0', font: { weight: 'bold', size: 11 } }
+          },
+          y: {
+            position: 'left',
+            grid: { color: chartGridColor },
+            ticks: {
+              color: '#34d399',
+              font: { size: 10 },
+              callback: (val) => (val >= 0 ? '+₹' : '-₹') + Math.abs(val).toLocaleString()
+            }
+          },
+          y1: {
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            ticks: {
+              color: '#38bdf8',
+              font: { size: 10 },
+              callback: (val) => (val >= 0 ? '+' : '') + val + '%'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: { color: '#94a3b8', font: { size: 11 } }
+          }
+        }
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // TAB SWITCHER
+    // -------------------------------------------------------------------------
+    function switchControlTab(tabName) {
+      const pFin = document.getElementById('panel-financial');
+      const pCog = document.getElementById('panel-cognitive');
+      const bFin = document.getElementById('tab-btn-financial');
+      const bCog = document.getElementById('tab-btn-cognitive');
+
+      if (tabName === 'financial') {
+        pFin.classList.remove('hidden');
+        pCog.classList.add('hidden');
+        bFin.className = "px-4 py-2 text-xs font-bold border-b-2 border-emerald-400 text-emerald-400 transition flex items-center gap-2";
+        bCog.className = "px-4 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2";
+      } else {
+        pFin.classList.add('hidden');
+        pCog.classList.remove('hidden');
+        bFin.className = "px-4 py-2 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition flex items-center gap-2";
+        bCog.className = "px-4 py-2 text-xs font-bold border-b-2 border-purple-400 text-purple-400 transition flex items-center gap-2";
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // LIVE SLIDER VALUE & RUPEE SCALING HANDLERS
+    // -------------------------------------------------------------------------
+    function handleSpendSliderChange(val) {
+      const num = parseFloat(val);
+      const badge = document.getElementById('badge-spend');
+      if (num < 0) {
+        badge.textContent = `${num}% (Thrift)`;
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-cyan-950/80 text-cyan-400 border border-cyan-500/30";
+      } else if (num > 0) {
+        badge.textContent = `+${num}% (Surge)`;
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-rose-950/80 text-rose-400 border border-rose-500/30";
+      } else {
+        badge.textContent = "0% (Baseline)";
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700";
+      }
+    }
+
+    function handleSideIncomeSliderChange(val) {
+      const num = parseFloat(val);
+      const badge = document.getElementById('badge-side-income');
+      if (num > 0) {
+        const boostRupees = Math.round((num / 100.0) * userIncome);
+        badge.textContent = `${num}% Influx (+₹${boostRupees.toLocaleString()}/mo)`;
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-emerald-950/80 text-emerald-400 border border-emerald-500/30";
+      } else {
+        badge.textContent = "0% (None)";
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700";
+      }
+    }
+
+    function handleShockSliderChange(val) {
+      const num = parseFloat(val);
+      const shockDay = document.getElementById('slider-shock-day').value;
+      const badge = document.getElementById('badge-shock');
+      if (num > 0) {
+        const shockRupees = Math.round((num / 100.0) * userBudget);
+        badge.textContent = `${num}% Shock (₹${shockRupees.toLocaleString()} on Day ${shockDay})`;
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-rose-950/80 text-rose-400 border border-rose-500/30";
+      } else {
+        badge.textContent = "0% (No Shock)";
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700";
+      }
+    }
+
+    function handleShockDaySliderChange(val) {
+      const day = parseInt(val, 10);
+      const badge = document.getElementById('badge-shock-day');
+      badge.textContent = `Day ${day} of 90`;
+      // Also update shock badge with new day
+      handleShockSliderChange(document.getElementById('slider-shock').value);
+    }
+
+    function handleInflationSliderChange(val) {
+      const num = parseFloat(val);
+      const badge = document.getElementById('badge-inflation');
+      if (num > 0) {
+        badge.textContent = `+${num}% Inflation`;
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-indigo-950/80 text-indigo-400 border border-indigo-500/30";
+      } else {
+        badge.textContent = "0% (Stable)";
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700";
+      }
+    }
+
+    function handleStudySliderChange(val) {
+      const num = parseFloat(val);
+      const badge = document.getElementById('badge-study');
+      const sign = num > 0 ? '+' : '';
+      badge.textContent = `${sign}${num.toFixed(1)}h / day`;
+    }
+
+    function handleSleepSliderChange(val) {
+      const num = parseFloat(val);
+      const badge = document.getElementById('badge-sleep');
+      badge.textContent = `${num.toFixed(1)}h Sleep`;
+    }
+
+    function handleWorkSliderChange(val) {
+      const num = parseFloat(val);
+      const badge = document.getElementById('badge-work');
+      const sign = num > 0 ? '+' : '';
+      badge.textContent = `${sign}${num.toFixed(1)}h Overtime`;
+      badge.className = num > 0
+        ? "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-blue-950/80 text-blue-400 border border-blue-500/30"
+        : "font-mono font-bold px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 border border-slate-700";
+    }
+
+    function handleScreenSliderChange(val) {
+      const num = parseFloat(val);
+      const badge = document.getElementById('badge-screen');
+      badge.textContent = `${num.toFixed(1)}h Ceiling`;
+    }
+
+    function handleSprintToggleChange(checked) {
+      const badge = document.getElementById('badge-sprint');
+      if (checked) {
+        badge.textContent = "Sprint Active (Days 20-34)";
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[10px] bg-amber-950/90 text-amber-400 border border-amber-500/40";
+      } else {
+        badge.textContent = "Standard Pacing (Off)";
+        badge.className = "font-mono font-bold px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700";
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 4 UNIVERSAL PROFILE-SCALED PRESETS
+    // -------------------------------------------------------------------------
+    function applyPreset(presetType) {
+      if (presetType === 'controlled') {
+        // [Controlled Tuning]: -10% spend, +1h study, 7.5h sleep, 6.5h screen, 0% shock, sprint OFF
+        document.getElementById('slider-spend').value = -10;
+        handleSpendSliderChange(-10);
+        document.getElementById('slider-side-income').value = 0;
+        handleSideIncomeSliderChange(0);
+        document.getElementById('slider-shock').value = 0;
+        handleShockSliderChange(0);
+        document.getElementById('slider-shock-day').value = 30;
+        handleShockDaySliderChange(30);
+        document.getElementById('slider-inflation').value = 0;
+        handleInflationSliderChange(0);
+
+        document.getElementById('slider-study').value = 1.0;
+        handleStudySliderChange(1.0);
+        document.getElementById('slider-sleep').value = 7.5;
+        handleSleepSliderChange(7.5);
+        document.getElementById('slider-work').value = 0.0;
+        handleWorkSliderChange(0.0);
+        document.getElementById('slider-screen').value = 6.5;
+        handleScreenSliderChange(6.5);
+        document.getElementById('toggle-sprint').checked = false;
+        handleSprintToggleChange(false);
+
+      } else if (presetType === 'aggressive') {
+        // [Aggressive Optimization]: -20% spend, +15% side income, +2h study, 8h sleep, sprint OFF
+        document.getElementById('slider-spend').value = -20;
+        handleSpendSliderChange(-20);
+        document.getElementById('slider-side-income').value = 15;
+        handleSideIncomeSliderChange(15);
+        document.getElementById('slider-shock').value = 0;
+        handleShockSliderChange(0);
+        document.getElementById('slider-shock-day').value = 30;
+        handleShockDaySliderChange(30);
+        document.getElementById('slider-inflation').value = 0;
+        handleInflationSliderChange(0);
+
+        document.getElementById('slider-study').value = 2.0;
+        handleStudySliderChange(2.0);
+        document.getElementById('slider-sleep').value = 8.0;
+        handleSleepSliderChange(8.0);
+        document.getElementById('slider-work').value = 0.0;
+        handleWorkSliderChange(0.0);
+        document.getElementById('slider-screen').value = 6.0;
+        handleScreenSliderChange(6.0);
+        document.getElementById('toggle-sprint').checked = false;
+        handleSprintToggleChange(false);
+
+      } else if (presetType === 'sprint') {
+        // [Startup Sprint]: +30% side income, +2h work, +2h study, 6.0h sleep, sprint ON
+        document.getElementById('slider-spend').value = 0;
+        handleSpendSliderChange(0);
+        document.getElementById('slider-side-income').value = 30;
+        handleSideIncomeSliderChange(30);
+        document.getElementById('slider-shock').value = 0;
+        handleShockSliderChange(0);
+        document.getElementById('slider-shock-day').value = 30;
+        handleShockDaySliderChange(30);
+        document.getElementById('slider-inflation').value = 0;
+        handleInflationSliderChange(0);
+
+        document.getElementById('slider-study').value = 2.0;
+        handleStudySliderChange(2.0);
+        document.getElementById('slider-sleep').value = 6.0;
+        handleSleepSliderChange(6.0);
+        document.getElementById('slider-work').value = 2.0;
+        handleWorkSliderChange(2.0);
+        document.getElementById('slider-screen').value = 8.0;
+        handleScreenSliderChange(8.0);
+        document.getElementById('toggle-sprint').checked = true;
+        handleSprintToggleChange(true);
+
+      } else if (presetType === 'shock') {
+        // [Stress Shock]: +25% spend surge, 5.5h sleep, 11h screen, 35% emergency shock on Day 30
+        document.getElementById('slider-spend').value = 25;
+        handleSpendSliderChange(25);
+        document.getElementById('slider-side-income').value = 0;
+        handleSideIncomeSliderChange(0);
+        document.getElementById('slider-shock').value = 35;
+        handleShockSliderChange(35);
+        document.getElementById('slider-shock-day').value = 30;
+        handleShockDaySliderChange(30);
+        document.getElementById('slider-inflation').value = 5;
+        handleInflationSliderChange(5);
+
+        document.getElementById('slider-study').value = -1.0;
+        handleStudySliderChange(-1.0);
+        document.getElementById('slider-sleep').value = 5.5;
+        handleSleepSliderChange(5.5);
+        document.getElementById('slider-work').value = 0.0;
+        handleWorkSliderChange(0.0);
+        document.getElementById('slider-screen').value = 11.0;
+        handleScreenSliderChange(11.0);
+        document.getElementById('toggle-sprint').checked = false;
+        handleSprintToggleChange(false);
+      }
+
+      executeSimulation();
+    }
+
+    // -------------------------------------------------------------------------
+    // ASYNCHRONOUS SIMULATION EXECUTION & DOM UPDATE
+    // -------------------------------------------------------------------------
+    async function executeSimulation() {
+      const btn = document.getElementById('btn-simulate');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i> Simulating 4 Trajectories...`;
+
+      // Read all 10 controls
+      const spendVal = parseFloat(document.getElementById('slider-spend').value);
+      const sideIncomeVal = parseFloat(document.getElementById('slider-side-income').value);
+      const shockVal = parseFloat(document.getElementById('slider-shock').value);
+      const shockDayVal = parseInt(document.getElementById('slider-shock-day').value, 10);
+      const inflationVal = parseFloat(document.getElementById('slider-inflation').value);
+
+      const studyVal = parseFloat(document.getElementById('slider-study').value);
+      const sleepVal = parseFloat(document.getElementById('slider-sleep').value);
+      const workVal = parseFloat(document.getElementById('slider-work').value);
+      const screenVal = parseFloat(document.getElementById('slider-screen').value);
+      const sprintVal = document.getElementById('toggle-sprint').checked;
+
+      const payload = {
+        expense_delta_pct: spendVal,
+        side_income_pct: sideIncomeVal,
+        shock_pct: shockVal,
+        shock_day: shockDayVal,
+        fixed_inflation_pct: inflationVal,
+        study_hours_delta: studyVal,
+        sleep_target_hours: sleepVal,
+        work_hours_delta: workVal,
+        screen_limit_hours: screenVal,
+        sprint_mode: sprintVal,
+        horizon_days: 90
+      };
+
+      try {
+        const response = await fetch('/api/simulate/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Simulation returned unsuccessful response');
+        }
+
+        // Format dates if updated
+        if (data.sim_dates && data.sim_dates.length > 0) {
+          simDates = data.sim_dates.map(formatChartDate);
+          wealthChart.data.labels = simDates;
+          focusChart.data.labels = simDates;
+        }
+
+        // 1. Update Wealth Chart (Dataset 0: Base, 1: Custom Amber, 2: Case A, 3: Case B)
+        wealthChart.data.datasets[0].data = data.trajectories.baseline.cumulative_savings;
+        wealthChart.data.datasets[1].data = data.trajectories.custom_scenario.cumulative_savings;
+        wealthChart.data.datasets[2].data = data.trajectories.scenario_a.cumulative_savings;
+        wealthChart.data.datasets[3].data = data.trajectories.scenario_b.cumulative_savings;
+        wealthChart.update();
+
+        // 2. Update Focus Chart
+        focusChart.data.datasets[0].data = data.trajectories.baseline.productivity;
+        focusChart.data.datasets[1].data = data.trajectories.custom_scenario.productivity;
+        focusChart.data.datasets[2].data = data.trajectories.scenario_a.productivity;
+        focusChart.data.datasets[3].data = data.trajectories.scenario_b.productivity;
+        focusChart.update();
+
+        // 3. Update Cross-Impact Bar Chart
+        const newDeltaCustom_Savings = data.custom_impact.net_savings_delta;
+        const newDeltaA_Savings = data.deltas.scenario_a.net_savings_delta;
+        const newDeltaB_Savings = data.deltas.scenario_b.net_savings_delta;
+
+        const newDeltaCustom_Focus = data.custom_impact.focus_pct_gained;
+        const newDeltaA_Focus = data.deltas.scenario_a.focus_pct_gained;
+        const newDeltaB_Focus = data.deltas.scenario_b.focus_pct_gained;
+
+        crossImpactChart.data.datasets[0].data = [newDeltaCustom_Savings, newDeltaA_Savings, newDeltaB_Savings];
+        crossImpactChart.data.datasets[0].backgroundColor = [
+          newDeltaCustom_Savings >= 0 ? '#f59e0b' : '#f43f5e',
+          newDeltaA_Savings >= 0 ? '#10b981' : '#f43f5e',
+          newDeltaB_Savings >= 0 ? '#10b981' : '#f43f5e'
+        ];
+
+        crossImpactChart.data.datasets[1].data = [newDeltaCustom_Focus, newDeltaA_Focus, newDeltaB_Focus];
+        crossImpactChart.data.datasets[1].backgroundColor = [
+          newDeltaCustom_Focus >= 0 ? '#06b6d4' : '#f43f5e',
+          newDeltaA_Focus >= 0 ? '#06b6d4' : '#f43f5e',
+          newDeltaB_Focus >= 0 ? '#06b6d4' : '#f43f5e'
+        ];
+        crossImpactChart.update();
+
+        // 4. Update "Live Custom Impact" Card
+        const customCardSavings = document.getElementById('custom-savings-delta');
+        const customCardFocus = document.getElementById('custom-focus-delta');
+        const customCardBurnout = document.getElementById('custom-burnout-risk');
+
+        if (customCardSavings) {
+          customCardSavings.textContent = data.custom_impact.net_savings_formatted;
+          customCardSavings.className = `text-3xl lg:text-4xl font-black font-mono ${data.custom_impact.net_savings_formatted.includes('-') ? 'text-rose-400' : 'text-amber-400'}`;
+        }
+        if (customCardFocus) {
+          customCardFocus.textContent = data.custom_impact.focus_formatted;
+          customCardFocus.className = `text-xl font-black font-mono ${data.custom_impact.focus_formatted.includes('-') ? 'text-rose-400' : 'text-cyan-400'}`;
+        }
+        if (customCardBurnout) {
+          const bLevel = data.custom_impact.burnout_risk_level;
+          const bColor = bLevel === 'Low' ? 'text-emerald-400' : (bLevel === 'Moderate' ? 'text-amber-400' : 'text-rose-400');
+          customCardBurnout.className = `text-base font-black flex items-center gap-1.5 ${bColor}`;
+          customCardBurnout.innerHTML = `<i class="fa-solid fa-heart-pulse text-xs shrink-0"></i> <span class="truncate">${bLevel} Risk</span>`;
+        }
+
+        // 5. Update Advisory Cards in Place
+        updateAdvisoryCardsUI(data.advisory_cards);
+
+        // 6. Update Plain-English Takeaway
+        const takeawayEl = document.getElementById('plain-english-text');
+        if (takeawayEl && data.plain_english_takeaway) {
+          takeawayEl.textContent = data.plain_english_takeaway;
+        }
+
+      } catch (err) {
+        console.error("Simulation error:", err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+      }
+    }
+
+    // Helper: Re-render Advisory Cards UI
+    function updateAdvisoryCardsUI(cards) {
+      const container = document.getElementById('advisory-cards-container');
+      if (!container || !cards) return;
+
+      container.innerHTML = cards.map(card => {
+        const isBest = card.case_type === 'Best-Case';
+        const isRisk = card.case_type === 'Risk-Case';
+        const borderClass = isBest 
+          ? 'border-emerald-500/50 bg-gradient-to-b from-emerald-950/20 via-twin-card to-twin-card shadow-emerald-950/20 hover:border-emerald-400' 
+          : isRisk 
+          ? 'border-rose-500/50 bg-gradient-to-b from-rose-950/20 via-twin-card to-twin-card shadow-rose-950/20 hover:border-rose-400'
+          : 'border-cyan-500/40 bg-gradient-to-b from-cyan-950/20 via-twin-card to-twin-card shadow-cyan-950/20 hover:border-cyan-400';
+
+        const checkColor = isBest ? 'text-emerald-400' : isRisk ? 'text-rose-400' : 'text-cyan-400';
+        const finColor = card.financial_delta_label.includes('-') ? 'text-rose-400' : 'text-emerald-400';
+        const prodColor = card.productivity_delta_label.includes('-') ? 'text-rose-400' : 'text-cyan-400';
+
+        const actionItems = card.action_steps.map(step => `
+          <li class="flex items-start gap-2 min-w-0">
+            <i class="fa-solid fa-circle-check text-[11px] mt-0.5 shrink-0 ${checkColor}"></i>
+            <span class="leading-snug break-words min-w-0">${step}</span>
+          </li>
+        `).join('');
+
+        return `
+          <div class="p-5 rounded-2xl bg-twin-card border transition-all duration-300 shadow-xl flex flex-col justify-between space-y-4 min-w-0 ${borderClass}">
+            <div class="space-y-3 min-w-0">
+              <div class="flex items-center justify-between min-w-0">
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${card.badge_class} shrink-0">
+                  ${card.case_type}
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono truncate">${card.budget_breach_label}</span>
+              </div>
+
+              <div>
+                <h3 class="text-base font-black text-white tracking-tight">${card.title}</h3>
+                <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">${card.description}</p>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 pt-2 min-w-0">
+                <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 min-w-0">
+                  <span class="text-[9px] uppercase font-bold text-slate-400 block truncate">Capital Impact</span>
+                  <span class="text-xs font-black font-mono truncate block ${finColor}">
+                    ${card.financial_delta_label}
+                  </span>
+                </div>
+                <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 min-w-0">
+                  <span class="text-[9px] uppercase font-bold text-slate-400 block truncate">Cognitive Impact</span>
+                  <span class="text-xs font-black font-mono truncate block ${prodColor}">
+                    ${card.productivity_delta_label}
+                  </span>
+                </div>
+              </div>
+
+              <div class="space-y-2 pt-2 border-t border-slate-800/80 min-w-0">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Action Protocol:</span>
+                <ul class="space-y-2 text-xs text-slate-300">
+                  ${actionItems}
+                </ul>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 min-w-0">
+              <span class="truncate"><i class="fa-solid fa-heart-pulse text-rose-400 mr-1"></i> ${card.burnout_label}</span>
+              <span class="font-mono font-bold text-slate-300 shrink-0">₹${Number(card.summary_metrics.weekly_expense_cap).toLocaleString()}/wk</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+
+  {% endif %}
+
+</div>
+{% endblock %}

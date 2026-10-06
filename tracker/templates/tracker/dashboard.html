@@ -1,0 +1,1224 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Executive Dashboard - Digital Twin AI{% endblock %}
+{% block content %}
+
+<style>
+  #chatMessages::-webkit-scrollbar {
+    width: 6px;
+  }
+  #chatMessages::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 9999px;
+  }
+  #chatMessages::-webkit-scrollbar-thumb {
+    background: rgba(51, 65, 85, 0.8);
+    border-radius: 9999px;
+  }
+  #chatMessages::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.7);
+  }
+</style>
+
+{% if not has_data %}
+<!-- Zero-Data State / Onboarding View -->
+<div class="p-6 md:p-10 max-w-4xl mx-auto w-full space-y-6">
+  <div class="bg-gradient-to-r from-twin-card to-slate-900 border border-twin-border rounded-3xl p-8 shadow-2xl text-center space-y-5">
+    <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-3xl mx-auto shadow-inner">
+      <i class="fa-solid fa-atom animate-spin-slow"></i>
+    </div>
+    <div class="space-y-2">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-xs font-bold text-cyan-400 uppercase tracking-widest">
+        Digital Twin Uninitialized
+      </div>
+      <h1 class="text-3xl font-black text-white tracking-tight">Welcome, {{ user.first_name|default:user.username }}!</h1>
+      <p class="text-slate-400 text-sm max-w-lg mx-auto">
+        Your digital twin requires telemetry data to train machine learning models, calculate forward forecasts, and run multi-lever What-If simulations.
+      </p>
+    </div>
+
+    <!-- Batch Ingestion Form -->
+    <div class="max-w-md mx-auto bg-twin-cardInner border border-slate-800 rounded-2xl p-6 text-left shadow-lg">
+      <h2 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+        <i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i> Ingest Consolidated Dataset
+      </h2>
+      <p class="text-xs text-slate-400 mb-4">Upload your 365-day CSV file to initialize your twin instantly.</p>
+      
+      <form method="POST" action="{% url 'upload_csv' %}" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        <input type="file" name="csv_file" accept=".csv" required class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-500 file:text-white hover:file:bg-cyan-400 cursor-pointer bg-slate-900/60 p-2 rounded-xl border border-slate-700">
+        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow text-xs transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-bolt"></i> Upload & Initialize Twin
+        </button>
+      </form>
+    </div>
+
+    <div class="flex items-center justify-center gap-4 pt-2">
+      <span class="text-xs text-slate-500 font-mono">— OR —</span>
+    </div>
+
+    <div>
+      <a href="{% url 'daily_entry' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 font-bold rounded-xl text-xs transition">
+        <i class="fa-solid fa-pen-to-square"></i> Record First Manual Daily Entry
+      </a>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- Populated Executive Dashboard Layout -->
+<div class="p-4 md:p-8 max-w-[1600px] mx-auto w-full space-y-6 min-w-0">
+
+  <!-- Header Welcome Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-twin-card via-slate-900 to-twin-card p-5 md:p-6 rounded-2xl border border-twin-border shadow-xl">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-[11px] font-bold text-emerald-400 uppercase tracking-widest mb-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active PostgreSQL Synchronization
+      </div>
+      <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+        Welcome back, {{ user.first_name|default:user.username }}!
+      </h1>
+      <p class="text-slate-400 text-xs mt-1">
+        Consolidated Personal Overview • Real-Time ML Forecasts • Grounded AI Assistant
+      </p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <span class="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono text-cyan-400 font-bold">
+        Twin #{{ user.id|stringformat:"04d" }}
+      </span>
+      <a href="{% url 'daily_entry' %}" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow text-xs flex items-center gap-2 transition">
+        <i class="fa-solid fa-plus"></i> Daily Log
+      </a>
+      <a href="{% url 'simulation_sandbox' %}" class="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold rounded-xl shadow text-xs flex items-center gap-2 transition">
+        <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> What-If Sandbox
+      </a>
+    </div>
+  </div>
+
+  <!-- Row 1: Top 5 Executive Metric Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 min-w-0">
+    
+    <!-- 1. Monthly Income -->
+    <div class="bg-twin-card border border-twin-border rounded-2xl p-4 shadow-lg hover:border-emerald-500/40 transition">
+      <div class="flex items-center justify-between text-slate-400 mb-2">
+        <span class="text-xs font-semibold uppercase tracking-wider">Monthly Income</span>
+        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-white tracking-tight">₹{{ monthly_income|floatformat:0 }}</div>
+      <div class="mt-2 flex items-center justify-between">
+        <span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold">
+          Declared Baseline
+        </span>
+        <span class="text-[10px] text-slate-500 font-mono">Monthly Inflow</span>
+      </div>
+    </div>
+
+    <!-- 2. Monthly Expenses -->
+    <div class="bg-twin-card border border-twin-border rounded-2xl p-4 shadow-lg hover:border-rose-500/40 transition">
+      <div class="flex items-center justify-between text-slate-400 mb-2">
+        <span class="text-xs font-semibold uppercase tracking-wider">Monthly Expenses</span>
+        <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-credit-card"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-white tracking-tight">₹{{ monthly_expenses|floatformat:0 }}</div>
+      <div class="mt-2 flex items-center justify-between">
+        <span class="text-[10px] text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded font-mono font-bold">
+          {{ expense_pacing_label }}
+        </span>
+        <span class="text-[10px] text-slate-500 font-mono">MTD Actuals</span>
+      </div>
+    </div>
+
+    <!-- 3. Monthly Savings -->
+    <div class="bg-twin-card border border-twin-border rounded-2xl p-4 shadow-lg hover:border-cyan-500/40 transition">
+      <div class="flex items-center justify-between text-slate-400 mb-2">
+        <span class="text-xs font-semibold uppercase tracking-wider">Monthly Savings</span>
+        <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-piggy-bank"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-white tracking-tight">₹{{ monthly_savings|floatformat:0 }}</div>
+      <div class="mt-2 flex items-center justify-between">
+        <span class="text-[10px] text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded font-mono font-bold">
+          {{ savings_rate|floatformat:1 }}% Savings Rate
+        </span>
+        <span class="text-[10px] text-slate-500 font-mono">Current Period</span>
+      </div>
+    </div>
+
+    <!-- 4. Total Study Hours -->
+    <div class="bg-twin-card border border-twin-border rounded-2xl p-4 shadow-lg hover:border-indigo-500/40 transition">
+      <div class="flex items-center justify-between text-slate-400 mb-2">
+        <span class="text-xs font-semibold uppercase tracking-wider">Study Hours</span>
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-white tracking-tight">{{ total_study_hours|floatformat:1 }}h</div>
+      <div class="mt-2 flex items-center justify-between">
+        <span class="text-[10px] text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded font-mono font-bold">
+          {{ study_pacing_pct|floatformat:0 }}% of {{ target_study_hours|floatformat:0 }}h
+        </span>
+        <span class="text-[10px] text-slate-500 font-mono">Past 30 Days</span>
+      </div>
+    </div>
+
+    <!-- 5. Habit Adherence Score -->
+    <div class="bg-twin-card border border-twin-border rounded-2xl p-4 shadow-lg hover:border-amber-500/40 transition">
+      <div class="flex items-center justify-between text-slate-400 mb-2">
+        <span class="text-xs font-semibold uppercase tracking-wider">Habit Stability</span>
+        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm">
+          <i class="fa-solid fa-heart-pulse"></i>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-white tracking-tight">{{ habit_score|floatformat:1 }}%</div>
+      <div class="mt-2 flex items-center justify-between">
+        <span class="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded font-mono font-bold">
+          Adherence Index
+        </span>
+        <span class="text-[10px] text-slate-500 font-mono">Twin Health</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Main 2-Column Split: Left 7 cols, Right 5 cols -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-w-0">
+
+    <!-- ==================== LEFT COLUMN (7 COLS) ==================== -->
+    <div class="lg:col-span-7 xl:col-span-7 space-y-6 min-w-0">
+
+      <!-- Widget 1: Multi-Scenario Savings Projection (90-Day Simulation) -->
+      <div class="bg-twin-card border border-twin-border rounded-2xl p-5 md:p-6 shadow-xl min-w-0">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 text-base"><i class="fa-solid fa-arrow-trend-up"></i></span>
+              <h2 class="text-base font-bold text-white tracking-tight">90-Day Forward Wealth Accumulation Projection</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Machine learning simulation • Baseline Plan vs. Recommended Plan (+₹5,000/mo spend reduction)
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-medium">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Baseline Plan
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> +₹5,000 Savings
+            </span>
+          </div>
+        </div>
+
+        <!-- 90-Day Wealth Summary KPI Chips -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-4">
+          <div class="bg-twin-cardInner p-3 rounded-xl border border-slate-800">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Baseline 90d Wealth</div>
+            <div id="baseline90dDisplay" class="text-lg font-black text-cyan-400 font-mono mt-0.5">Calculating...</div>
+          </div>
+          <div class="bg-twin-cardInner p-3 rounded-xl border border-slate-800">
+            <div class="text-[10px] uppercase font-bold text-slate-400">+₹5k Optimized Wealth</div>
+            <div id="plus5k90dDisplay" class="text-lg font-black text-emerald-400 font-mono mt-0.5">Calculating...</div>
+          </div>
+          <div class="col-span-2 sm:col-span-1 bg-twin-cardInner p-3 rounded-xl border border-slate-800">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Projected 90d Surplus</div>
+            <div id="surplus90dDisplay" class="text-lg font-black text-amber-400 font-mono mt-0.5">Calculating...</div>
+          </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="relative h-64 md:h-72 w-full min-w-0">
+          <canvas id="savingsProjectionChart" class="block w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Widget 2 & 3: Donut Expense Breakdown & Target Objectives (2-Col Sub-grid) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
+
+        <!-- Expense Allocation Donut -->
+        <div class="bg-twin-card border border-twin-border rounded-2xl p-5 shadow-xl flex flex-col justify-between min-w-0">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-cyan-400"><i class="fa-solid fa-chart-pie"></i></span>
+                <h3 class="text-sm font-bold text-white">Expense Distribution</h3>
+              </div>
+              <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">Past 30 Days</span>
+            </div>
+            
+            <div class="relative h-48 w-full min-w-0 flex items-center justify-center">
+              <canvas id="expenseDonutChart"></canvas>
+            </div>
+          </div>
+
+          <div id="expensePillsContainer" class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800 text-[11px] font-mono">
+            <!-- Dynamically populated by JS -->
+          </div>
+        </div>
+
+        <!-- Active Objectives Card -->
+        <div class="p-6 rounded-2xl bg-twin-card border border-twin-border shadow-xl flex flex-col justify-between min-w-0">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-bullseye text-cyan-400"></i>
+                <h3 class="text-sm font-bold text-white">Active Objectives</h3>
+              </div>
+              <button onclick="openGoalModal()" class="px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus text-[10px]"></i> Add Goal
+              </button>
+            </div>
+
+            <!-- Scrollable goals list with proper breathing room and zero dead space -->
+            <div class="space-y-3.5 max-h-[380px] overflow-y-auto pr-1">
+              {% for goal in goals %}
+              <div class="p-3.5 rounded-xl bg-twin-cardInner border border-slate-800 space-y-2">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <span class="p-2 rounded-lg bg-slate-900 text-xs">
+                      {% if goal.category == 'Finance' %}<i class="fa-solid fa-wallet text-emerald-400"></i>
+                      {% elif goal.category == 'Study' %}<i class="fa-solid fa-graduation-cap text-cyan-400"></i>
+                      {% else %}<i class="fa-solid fa-heart-pulse text-rose-400"></i>{% endif %}
+                    </span>
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold text-white truncate">{{ goal.title }}</div>
+                      <div class="text-[10px] text-slate-400">
+                        {% if goal.unit == '%' %}
+                          {{ goal.current_value|floatformat:0 }}% of {{ goal.target_value|floatformat:0 }}%
+                        {% elif goal.unit == 'Days' %}
+                          {{ goal.current_value|floatformat:0 }} / {{ goal.target_value|floatformat:0 }} Days
+                        {% else %}
+                          ₹{{ goal.current_value|floatformat:0 }} / ₹{{ goal.target_value|floatformat:0 }}
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <a href="{% url 'delete_goal' goal.id %}" onclick="return confirm('Remove objective: {{ goal.title }}?')" class="text-slate-500 hover:text-red-400 p-1 transition">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                  </a>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all duration-300 goal-progress-bar" data-progress="{{ goal.progress_percentage|default:0 }}"></div>
+                </div>
+
+                <form method="POST" action="{% url 'update_goal_progress' goal.id %}" class="flex items-center justify-between gap-2 pt-0.5">
+                  {% csrf_token %}
+                  <span class="text-[11px] font-mono font-bold text-cyan-400">{{ goal.progress_percentage }}% complete</span>
+                  <div class="flex items-center gap-1.5">
+                    <input type="number" step="1" name="current_value" value="{{ goal.current_value|floatformat:0 }}" class="w-16 bg-slate-900 border border-slate-700 text-white rounded-md px-2 py-0.5 text-xs text-center focus:outline-none focus:border-cyan-500">
+                    <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 rounded-md px-2 py-0.5 text-xs font-bold transition">
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+              {% empty %}
+              <p class="text-xs text-slate-500 italic text-center py-6">No target objectives registered.</p>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-800/80 text-[10px] text-slate-500 flex items-center justify-between">
+            <span>Linked to Digital Twin Goal Tracker</span>
+            <span class="font-mono text-cyan-400">{{ goals|length }} Objectives</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Widget 4: Toggleable Study & Productivity Insights -->
+      <div class="bg-twin-card border border-twin-border rounded-2xl p-5 md:p-6 shadow-xl min-w-0">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-cyan-400"><i class="fa-solid fa-chart-column"></i></span>
+              <h3 class="text-sm font-bold text-white">Study & Productivity Dynamics (Past 14 Days)</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Chronological daily telemetry tracking</p>
+          </div>
+          <!-- Tab Buttons -->
+          <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+            <button id="tabStudyHours" onclick="switchStudyTab('study')" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+              Study Hours
+            </button>
+            <button id="tabWorkHours" onclick="switchStudyTab('work')" class="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition">
+              Work Hours
+            </button>
+            <button id="tabProdScore" onclick="switchStudyTab('score')" class="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition">
+              Productivity Score
+            </button>
+          </div>
+        </div>
+
+        <div class="relative h-60 w-full min-w-0 mt-4">
+          <canvas id="studyProdChart" class="block w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Widget 5: Toggleable Fitness & Health Telemetry -->
+      <div class="bg-twin-card border border-twin-border rounded-2xl p-5 md:p-6 shadow-xl min-w-0">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-rose-400"><i class="fa-solid fa-heart-pulse"></i></span>
+              <h3 class="text-sm font-bold text-white">Health & Wellness Telemetry (Past 14 Days)</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Continuous physiological & movement patterns</p>
+          </div>
+          <!-- Tab Buttons -->
+          <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+            <button id="tabSteps" onclick="switchFitnessTab('steps')" class="px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Daily Steps
+            </button>
+            <button id="tabSleep" onclick="switchFitnessTab('sleep')" class="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition">
+              Sleep Hours
+            </button>
+            <button id="tabExercise" onclick="switchFitnessTab('exercise')" class="px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition">
+              Exercise (Mins)
+            </button>
+          </div>
+        </div>
+
+        <div class="relative h-60 w-full min-w-0 mt-4">
+          <canvas id="healthFitnessChart" class="block w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Widget 6: Simulation Sandbox Jump Card -->
+      <div class="bg-gradient-to-r from-purple-950/40 via-twin-card to-slate-900 border border-purple-500/30 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-2xl flex-shrink-0">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">What-If Multi-Lever Simulation Sandbox</h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Simulate counterfactual futures: test lifestyle shocks, rent surges, side-hustles, and study boosts over 90 days.
+            </p>
+          </div>
+        </div>
+        <a href="{% url 'simulation_sandbox' %}" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg text-xs whitespace-nowrap transition flex items-center gap-2">
+          Open Sandbox <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- ==================== RIGHT COLUMN (5 COLS) ==================== -->
+    <div class="lg:col-span-5 xl:col-span-5 space-y-6 min-w-0">
+
+      <!-- Backdrop for expanded fullscreen chat modal -->
+      <div id="chatBackdrop" onclick="toggleExpandChat()" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-40 hidden transition-opacity duration-300"></div>
+
+      <!-- Widget 1: Embedded AI Assistant Chat Widget (Milestone 4 Hero) -->
+      <div id="chatAssistantCard" class="w-full bg-twin-card border border-twin-border rounded-2xl shadow-xl flex flex-col min-w-0 overflow-hidden transition-all duration-300">
+        
+        <!-- Assistant Header -->
+        <div class="p-4 bg-gradient-to-r from-slate-900 via-twin-card to-slate-900 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
+                <i class="fa-solid fa-robot text-sm"></i>
+              </div>
+              <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 animate-pulse"></span>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                Twin AI Assistant
+                <span class="text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-1.5 py-0.2 rounded font-mono">v4.0</span>
+              </div>
+              <div class="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                <i class="fa-solid fa-link text-[8px]"></i> Context Grounded
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="btn-expand-chat" onclick="toggleExpandChat()" type="button" title="Expand Chat" class="text-slate-400 hover:text-cyan-400 p-1.5 rounded-lg hover:bg-slate-800 transition">
+              <i id="btn-expand-icon" class="fa-solid fa-expand text-xs"></i>
+            </button>
+            <button onclick="resetChat()" title="Reset Conversation" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition text-xs">
+              <i class="fa-solid fa-rotate-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Prompt Suggestion Chips -->
+        <div class="px-3.5 py-2.5 bg-slate-900/60 border-b border-slate-800/80 overflow-x-auto whitespace-nowrap scrollbar-none flex items-center gap-1.5">
+          {% for chip in assistant_preset_chips %}
+          <button onclick="sendPresetPrompt('{{ chip }}')" class="px-2.5 py-1 bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 border border-slate-700 hover:border-cyan-500/40 rounded-lg text-[11px] font-medium transition flex-shrink-0">
+            {{ chip }}
+          </button>
+          {% endfor %}
+        </div>
+
+        <!-- Chat Message History Container -->
+        <div id="chatMessages" class="h-[440px] md:h-[460px] max-h-[500px] overflow-y-auto space-y-3.5 text-xs select-text scroll-smooth p-4">
+          <!-- Initial Welcome Message from Twin AI -->
+          <div class="flex items-start gap-2.5 max-w-[90%]">
+            <div class="w-6 h-6 rounded-lg bg-cyan-600/30 text-cyan-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <div class="bg-twin-cardInner text-slate-200 border border-slate-700/60 rounded-2xl rounded-tl-sm p-3.5 leading-relaxed shadow space-y-1.5">
+              <p>
+                Hello <strong>{{ user.first_name|default:user.username }}</strong>! I am your <strong>Digital Twin Assistant</strong>, grounded in your real telemetry database.
+              </p>
+              <p class="text-slate-400 text-[11px]">
+                Ask me anything about your current MTD spending, 3-year compound savings projections, study habit optimizations, or What-If simulations.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typing Indicator Bubble (Hidden by default) -->
+        <div id="typingBubble" class="px-4 py-2 hidden">
+          <div class="flex items-center gap-2 bg-twin-cardInner border border-slate-800 rounded-xl px-3 py-2 w-fit text-slate-400 text-xs">
+            <i class="fa-solid fa-circle-notch fa-spin text-cyan-400"></i>
+            <span class="text-[11px] font-mono">Twin AI is analyzing telemetry...</span>
+          </div>
+        </div>
+
+        <!-- Chat Input Footer -->
+        <div class="p-3.5 bg-slate-900 border-t border-slate-800">
+          <form id="chatForm" onsubmit="handleChatSubmit(event)" class="relative flex items-center">
+            {% csrf_token %}
+            <input 
+              type="text" 
+              id="chatInput" 
+              placeholder="Ask your Twin AI anything..." 
+              autocomplete="off"
+              class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-4 pr-12 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition shadow-inner"
+            >
+            <button 
+              type="submit" 
+              id="chatSendBtn"
+              class="absolute right-2 px-3 py-2 bg-cyan-500 hover:bg-cyan-400 text-white rounded-lg text-xs font-bold transition shadow-md shadow-cyan-500/20 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+          <div class="flex items-center justify-between text-[10px] text-slate-500 mt-2 px-1">
+            <span class="flex items-center gap-1 font-mono">
+              <i class="fa-solid fa-shield-halved text-cyan-400"></i> Zero-Hallucination Grounding
+            </span>
+            <span class="font-mono">Press Enter to send</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Widget 2: Strategic Advisory & Prescriptive Recommendations -->
+      <div class="bg-twin-card border border-twin-border rounded-2xl p-5 shadow-xl min-w-0">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-400"><i class="fa-solid fa-compass"></i></span>
+            <h3 class="text-sm font-bold text-white">Strategic Prescriptions</h3>
+          </div>
+          <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-mono font-bold">
+            ML Advisory
+          </span>
+        </div>
+
+        <!-- Highlighted Expected / Recommended Case -->
+        {% if expected_case_card %}
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Recommended Trajectory</span>
+            <span class="text-xs font-mono font-bold text-white">90d: ₹{{ rec_val|default:expected_case_card.projected_savings|default:expected_case_card.summary_metrics.cumulative_savings|floatformat:0 }}</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-snug">
+            {{ expected_case_card.guidance|default:"Maintaining balanced daily expenses allows steady capital accumulation and habit consistency." }}
+          </p>
+        </div>
+        {% endif %}
+
+        <!-- Plain English Takeaway -->
+        {% if plain_english_takeaway %}
+        <div class="mt-3 p-3 bg-twin-cardInner rounded-xl border border-slate-800 text-slate-300 text-xs leading-relaxed">
+          <div class="flex items-start gap-2">
+            <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5"></i>
+            <div>
+              <span class="font-bold text-white">Twin Takeaway:</span>
+              <p class="text-slate-400 text-[11px] mt-0.5">{{ plain_english_takeaway }}</p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Best Case vs Risk Case Mini Matrix -->
+        <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-800 text-[11px]">
+          <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+            <div class="text-[10px] font-bold text-cyan-400 uppercase">Best Case</div>
+            <div class="font-mono font-bold text-white text-xs mt-0.5">₹{{ best_val|default:best_case_card.projected_savings|default:best_case_card.summary_metrics.cumulative_savings|floatformat:0 }}</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Optimized Discipline</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
+            <div class="text-[10px] font-bold text-rose-400 uppercase">Risk Case</div>
+            <div class="font-mono font-bold text-white text-xs mt-0.5">
+              {% if risk_val < 0 or risk_case_card.projected_savings < 0 or risk_case_card.summary_metrics.cumulative_savings < 0 %}
+                -₹{{ risk_savings_val_abs|default:risk_case_card.projected_savings_abs|floatformat:0 }}
+              {% else %}
+                ₹{{ risk_val|default:risk_case_card.projected_savings|default:risk_case_card.summary_metrics.cumulative_savings|floatformat:0 }}
+              {% endif %}
+            </div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Unconstrained Surge</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Widget 3: Audit Trail & Recent Activity -->
+      <div class="bg-twin-card border border-twin-border rounded-2xl p-5 shadow-xl min-w-0">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-cyan-400"><i class="fa-solid fa-clock-rotate-left"></i></span>
+            <h3 class="text-sm font-bold text-white">Audit Trail</h3>
+          </div>
+          <span class="text-[10px] text-slate-500 font-mono">{{ total_telemetry_count }} Records</span>
+        </div>
+
+        <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          {% for log in activity_logs %}
+          <div class="p-2 rounded-xl bg-twin-cardInner border border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0"></span>
+              <p class="text-xs text-slate-300 truncate">{{ log.action }}</p>
+            </div>
+            <span class="text-[9px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded font-mono flex-shrink-0 ml-2">
+              {{ log.timestamp|date:"M d, H:i" }}
+            </span>
+          </div>
+          {% empty %}
+          <p class="text-xs text-slate-500 italic text-center py-3">No activity logs recorded.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endif %}
+
+<!-- Add Goal Modal -->
+<div id="goalModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-twin-card border border-twin-border rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+      <h3 class="text-sm font-bold text-white">Add Target Objective</h3>
+      <button onclick="closeGoalModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <form method="POST" action="{% url 'add_goal' %}" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Objective Title</label>
+        <input type="text" name="title" required placeholder="e.g. Save ₹2,00,000 for emergency fund" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-cyan-500">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Category</label>
+        <select name="category" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-cyan-500">
+          <option value="Finance">Financial Objective</option>
+          <option value="Study">Academic / Engineering</option>
+          <option value="Habit">Lifestyle & Health</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Current</label>
+          <input type="number" step="1" name="current_value" value="0" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Target</label>
+          <input type="number" step="1" name="target_value" value="100" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Unit</label>
+          <input type="text" name="unit" value="₹" class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-xs text-center focus:outline-none focus:border-cyan-500">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-4 border-t border-slate-800">
+        <button type="button" onclick="closeGoalModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">Cancel</button>
+        <button type="submit" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-white rounded-xl text-xs font-bold shadow">Save Objective</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== JAVASCRIPT LOGIC & CHARTS ==================== -->
+<script>
+  function openGoalModal() { document.getElementById('goalModal').classList.remove('hidden'); }
+  function closeGoalModal() { document.getElementById('goalModal').classList.add('hidden'); }
+</script>
+
+{% if has_data %}
+<script id="dashboardData" type="application/json">
+{
+  "simDates": {{ sim_dates_json|safe }},
+  "currentSavings": {{ savings_current_plan_json|safe }},
+  "plus5kSavings": {{ savings_plus5k_plan_json|safe }},
+  "expenseLabels": {{ expense_category_labels_json|safe }},
+  "expenseValues": {{ expense_category_values_json|safe }},
+  "prodDates": {{ prod_dates_14_json|safe }},
+  "studyHoursData": {{ study_hours_14_json|safe }},
+  "workHoursData": {{ work_hours_14_json|safe }},
+  "prodScoresData": {{ productivity_score_14_json|safe }},
+  "healthDates": {{ health_dates_14_json|safe }},
+  "stepsData": {{ steps_14_json|safe }},
+  "sleepData": {{ sleep_14_json|safe }},
+  "exerciseData": {{ exercise_14_json|safe }}
+}
+</script>
+
+<script>
+  // Goal Progress Bars Initialization
+  document.querySelectorAll('.goal-progress-bar').forEach(function(bar) {
+    var p = parseFloat(bar.getAttribute('data-progress')) || 0;
+    bar.style.width = Math.min(Math.max(p, 0), 100) + '%';
+  });
+
+  // Global Chart.js styling
+  Chart.defaults.color = '#94a3b8';
+  Chart.defaults.borderColor = '#1e293b';
+  Chart.defaults.font.family = 'ui-sans-serif, system-ui, sans-serif';
+
+  // Read clean pre-parsed data from application/json tag (100% valid JavaScript)
+  const _dashData = JSON.parse(document.getElementById('dashboardData')?.textContent || '{}');
+  const simDates = _dashData.simDates || [];
+  const currentSavings = _dashData.currentSavings || [];
+  const plus5kSavings = _dashData.plus5kSavings || [];
+  const expenseLabels = _dashData.expenseLabels || [];
+  const expenseValues = _dashData.expenseValues || [];
+  const prodDates = _dashData.prodDates || [];
+  const studyHoursData = _dashData.studyHoursData || [];
+  const workHoursData = _dashData.workHoursData || [];
+  const prodScoresData = _dashData.prodScoresData || [];
+  const healthDates = _dashData.healthDates || [];
+  const stepsData = _dashData.stepsData || [];
+  const sleepData = _dashData.sleepData || [];
+  const exerciseData = _dashData.exerciseData || [];
+
+  // --- 1. Multi-Scenario Savings Projection Chart ---
+
+  // Update Summary KPI Chips
+  if (currentSavings.length > 0) {
+    const finalBase = currentSavings[currentSavings.length - 1];
+    const finalPlus5k = plus5kSavings.length > 0 ? plus5kSavings[plus5kSavings.length - 1] : finalBase;
+    const surplus = finalPlus5k - finalBase;
+    
+    const baseElem = document.getElementById('baseline90dDisplay');
+    const plus5kElem = document.getElementById('plus5k90dDisplay');
+    const surplusElem = document.getElementById('surplus90dDisplay');
+
+    if (baseElem) baseElem.innerText = '₹' + Math.round(finalBase).toLocaleString('en-IN');
+    if (plus5kElem) plus5kElem.innerText = '₹' + Math.round(finalPlus5k).toLocaleString('en-IN');
+    if (surplusElem) surplusElem.innerText = '+₹' + Math.round(surplus).toLocaleString('en-IN');
+  }
+
+  const ctxSavings = document.getElementById('savingsProjectionChart')?.getContext('2d');
+  if (ctxSavings) {
+    const gradBase = ctxSavings.createLinearGradient(0, 0, 0, 300);
+    gradBase.addColorStop(0, 'rgba(6, 182, 212, 0.25)');
+    gradBase.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+
+    const gradPlus5k = ctxSavings.createLinearGradient(0, 0, 0, 300);
+    gradPlus5k.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+    gradPlus5k.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+    new Chart(ctxSavings, {
+      type: 'line',
+      data: {
+        labels: simDates,
+        datasets: [
+          {
+            label: 'Baseline Plan',
+            data: currentSavings,
+            borderColor: '#06b6d4',
+            backgroundColor: gradBase,
+            fill: true,
+            borderWidth: 2,
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: '#06b6d4'
+          },
+          {
+            label: 'Recommended (+₹5k Savings)',
+            data: plus5kSavings,
+            borderColor: '#10b981',
+            backgroundColor: gradPlus5k,
+            fill: true,
+            borderWidth: 2.5,
+            tension: 0.35,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#10b981'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0E172A',
+            titleColor: '#f1f5f9',
+            bodyColor: '#cbd5e1',
+            borderColor: '#334155',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: function(ctx) {
+                return ctx.dataset.label + ': ₹' + Math.round(ctx.parsed.y).toLocaleString('en-IN');
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { maxTicksLimit: 7, font: { size: 10 } }
+          },
+          y: {
+            grid: { color: '#1e293b' },
+            ticks: {
+              font: { size: 10 },
+              callback: function(v) { return '₹' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v); }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // --- 2. Categorical Expense Donut Chart ---
+  const donutColors = ['#06b6d4', '#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6'];
+
+  const ctxDonut = document.getElementById('expenseDonutChart')?.getContext('2d');
+  if (ctxDonut && expenseLabels.length > 0) {
+    new Chart(ctxDonut, {
+      type: 'doughnut',
+      data: {
+        labels: expenseLabels,
+        datasets: [{
+          data: expenseValues,
+          backgroundColor: donutColors.slice(0, expenseLabels.length),
+          borderWidth: 2,
+          borderColor: '#0E172A'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0E172A',
+            borderColor: '#334155',
+            borderWidth: 1,
+            callbacks: {
+              label: function(ctx) {
+                return ' ' + ctx.label + ': ₹' + Math.round(ctx.parsed).toLocaleString('en-IN');
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Populate category pills
+    const pillsContainer = document.getElementById('expensePillsContainer');
+    if (pillsContainer) {
+      let pillsHtml = '';
+      const totalExp = expenseValues.reduce((a, b) => a + b, 0);
+      expenseLabels.forEach((lbl, idx) => {
+        const val = expenseValues[idx];
+        const pct = totalExp > 0 ? Math.round((val / totalExp) * 100) : 0;
+        const color = donutColors[idx % donutColors.length];
+        pillsHtml += `
+          <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="flex items-center gap-1.5 truncate text-slate-300">
+              <span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${color}"></span>
+              <span class="truncate">${lbl}</span>
+            </span>
+            <span class="font-bold text-white ml-1">₹${Math.round(val).toLocaleString('en-IN')} (${pct}%)</span>
+          </div>
+        `;
+      });
+      pillsContainer.innerHTML = pillsHtml;
+    }
+  }
+
+  // --- 3. Toggleable Study & Productivity Chart ---
+  let studyProdChartInstance = null;
+  const ctxStudyProd = document.getElementById('studyProdChart')?.getContext('2d');
+
+  function renderStudyProdChart(metricType) {
+    if (!ctxStudyProd) return;
+    if (studyProdChartInstance) studyProdChartInstance.destroy();
+
+    let chartType = 'bar';
+    let dataSeries = studyHoursData;
+    let label = 'Study Hours (hrs)';
+    let color = '#22d3ee';
+    let bgColor = 'rgba(34, 211, 238, 0.4)';
+
+    if (metricType === 'work') {
+      dataSeries = workHoursData;
+      label = 'Work Hours (hrs)';
+      color = '#38bdf8';
+      bgColor = 'rgba(56, 189, 248, 0.4)';
+    } else if (metricType === 'score') {
+      chartType = 'line';
+      dataSeries = prodScoresData;
+      label = 'Productivity Score (%)';
+      color = '#818cf8';
+      bgColor = 'rgba(129, 140, 248, 0.2)';
+    }
+
+    studyProdChartInstance = new Chart(ctxStudyProd, {
+      type: chartType,
+      data: {
+        labels: prodDates,
+        datasets: [{
+          label: label,
+          data: dataSeries,
+          borderColor: color,
+          backgroundColor: bgColor,
+          borderWidth: chartType === 'line' ? 2.5 : 1,
+          borderRadius: 6,
+          tension: 0.35,
+          pointRadius: chartType === 'line' ? 3 : 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: color,
+          fill: chartType === 'line'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0E172A',
+            borderColor: '#334155',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+          y: { grid: { color: '#1e293b' }, ticks: { font: { size: 10 } }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  function switchStudyTab(tab) {
+    const btnStudy = document.getElementById('tabStudyHours');
+    const btnWork = document.getElementById('tabWorkHours');
+    const btnScore = document.getElementById('tabProdScore');
+
+    [btnStudy, btnWork, btnScore].forEach(btn => {
+      if (btn) {
+        btn.className = "px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition";
+      }
+    });
+
+    if (tab === 'study' && btnStudy) {
+      btnStudy.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-cyan-500/20 text-cyan-400 border border-cyan-500/30";
+    } else if (tab === 'work' && btnWork) {
+      btnWork.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-cyan-500/20 text-cyan-400 border border-cyan-500/30";
+    } else if (tab === 'score' && btnScore) {
+      btnScore.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-indigo-500/20 text-indigo-400 border border-indigo-500/30";
+    }
+
+    renderStudyProdChart(tab);
+  }
+
+  renderStudyProdChart('study');
+
+  // --- 4. Toggleable Fitness & Health Chart ---
+  let healthFitnessChartInstance = null;
+  const ctxHealth = document.getElementById('healthFitnessChart')?.getContext('2d');
+
+  function renderHealthChart(metricType) {
+    if (!ctxHealth) return;
+    if (healthFitnessChartInstance) healthFitnessChartInstance.destroy();
+
+    let chartType = 'line';
+    let dataSeries = stepsData;
+    let label = 'Daily Steps';
+    let color = '#10b981';
+    let bgColor = 'rgba(16, 185, 129, 0.2)';
+
+    if (metricType === 'sleep') {
+      chartType = 'bar';
+      dataSeries = sleepData;
+      label = 'Sleep Hours (hrs)';
+      color = '#a78bfa';
+      bgColor = 'rgba(167, 139, 250, 0.4)';
+    } else if (metricType === 'exercise') {
+      chartType = 'bar';
+      dataSeries = exerciseData;
+      label = 'Exercise (mins)';
+      color = '#f43f5e';
+      bgColor = 'rgba(244, 63, 94, 0.4)';
+    }
+
+    healthFitnessChartInstance = new Chart(ctxHealth, {
+      type: chartType,
+      data: {
+        labels: healthDates,
+        datasets: [{
+          label: label,
+          data: dataSeries,
+          borderColor: color,
+          backgroundColor: bgColor,
+          borderWidth: chartType === 'line' ? 2.5 : 1,
+          borderRadius: 6,
+          tension: 0.35,
+          pointRadius: chartType === 'line' ? 3 : 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: color,
+          fill: chartType === 'line'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0E172A',
+            borderColor: '#334155',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+          y: { grid: { color: '#1e293b' }, ticks: { font: { size: 10 } }, beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  function switchFitnessTab(tab) {
+    const btnSteps = document.getElementById('tabSteps');
+    const btnSleep = document.getElementById('tabSleep');
+    const btnExercise = document.getElementById('tabExercise');
+
+    [btnSteps, btnSleep, btnExercise].forEach(btn => {
+      if (btn) {
+        btn.className = "px-3 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition";
+      }
+    });
+
+    if (tab === 'steps' && btnSteps) {
+      btnSteps.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+    } else if (tab === 'sleep' && btnSleep) {
+      btnSleep.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-indigo-500/20 text-indigo-400 border border-indigo-500/30";
+    } else if (tab === 'exercise' && btnExercise) {
+      btnExercise.className = "px-3 py-1 rounded-lg text-xs font-bold transition bg-rose-500/20 text-rose-400 border border-rose-500/30";
+    }
+
+    renderHealthChart(tab);
+  }
+
+  renderHealthChart('steps');
+
+  // --- 5. Embedded Conversational AI Assistant Handler ---
+  function getCsrfToken() {
+    const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (tokenInput) return tokenInput.value;
+    const cookieMatch = document.cookie.match(/csrftoken=([^;]+)/);
+    return cookieMatch ? cookieMatch[1] : '';
+  }
+
+  function formatMessageText(text) {
+    if (!text) return '';
+    // Format bold **text**
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Format line breaks
+    formatted = formatted.replace(/\n/g, '<br>');
+    return formatted;
+  }
+
+  function appendUserBubble(text) {
+    const chatContainer = document.getElementById('chatMessages');
+    const bubble = document.createElement('div');
+    bubble.className = "flex items-start justify-end gap-2.5 max-w-[90%] ml-auto";
+    bubble.innerHTML = `
+      <div class="bg-cyan-600/30 text-cyan-100 border border-cyan-500/40 rounded-2xl rounded-tr-sm p-3 leading-relaxed shadow text-xs">
+        ${formatMessageText(text)}
+      </div>
+      <div class="w-6 h-6 rounded-lg bg-cyan-600 text-white flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+        <i class="fa-solid fa-user"></i>
+      </div>
+    `;
+    chatContainer.appendChild(bubble);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  function appendAssistantBubble(text, followups) {
+    const chatContainer = document.getElementById('chatMessages');
+    const bubble = document.createElement('div');
+    bubble.className = "flex items-start gap-2.5 max-w-[95%]";
+
+    let followupHtml = '';
+    if (followups && followups.length > 0) {
+      followupHtml = '<div class="mt-2.5 pt-2 border-t border-slate-700/50 flex flex-wrap gap-1.5">';
+      followups.forEach(f => {
+        const escaped = f.replace(/'/g, "\\'");
+        followupHtml += `
+          <button onclick="sendPresetPrompt('${escaped}')" class="px-2 py-0.5 bg-slate-800 hover:bg-cyan-500/20 text-cyan-300 border border-slate-700 rounded text-[10px] font-medium transition">
+            ${f}
+          </button>
+        `;
+      });
+      followupHtml += '</div>';
+    }
+
+    bubble.innerHTML = `
+      <div class="w-6 h-6 rounded-lg bg-cyan-600/30 text-cyan-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+        <i class="fa-solid fa-robot"></i>
+      </div>
+      <div class="bg-twin-cardInner text-slate-200 border border-slate-700/60 rounded-2xl rounded-tl-sm p-3.5 leading-relaxed shadow space-y-1.5 text-xs">
+        <div>${formatMessageText(text)}</div>
+        ${followupHtml}
+      </div>
+    `;
+    chatContainer.appendChild(bubble);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  async function submitQueryToAssistant(promptText) {
+    const trimmed = promptText.trim();
+    if (!trimmed) return;
+
+    appendUserBubble(trimmed);
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) chatInput.value = '';
+
+    const typingBubble = document.getElementById('typingBubble');
+    const sendBtn = document.getElementById('chatSendBtn');
+
+    if (typingBubble) typingBubble.classList.remove('hidden');
+    if (sendBtn) sendBtn.disabled = true;
+
+    const chatContainer = document.getElementById('chatMessages');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    try {
+      const response = await fetch('/api/chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ message: trimmed })
+      });
+
+      const data = await response.json();
+      if (typingBubble) typingBubble.classList.add('hidden');
+      if (sendBtn) sendBtn.disabled = false;
+
+      if (data && data.success) {
+        const replyText = data.response || data.reply || '';
+        const actions = data.suggested_followups || data.suggested_actions || [];
+        appendAssistantBubble(replyText, actions);
+      } else {
+        appendAssistantBubble(data.error || "I'm having trouble analyzing your telemetry right now. Please try again.");
+      }
+    } catch (err) {
+      console.error("Assistant chat error:", err);
+      if (typingBubble) typingBubble.classList.add('hidden');
+      if (sendBtn) sendBtn.disabled = false;
+      appendAssistantBubble("Connection error with the Digital Twin assistant engine. Please ensure the server is responsive.");
+    }
+  }
+
+  function handleChatSubmit(e) {
+    e.preventDefault();
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+      submitQueryToAssistant(chatInput.value);
+    }
+  }
+
+  function sendPresetPrompt(promptText) {
+    submitQueryToAssistant(promptText);
+  }
+
+  function resetChat() {
+    const chatContainer = document.getElementById('chatMessages');
+    chatContainer.innerHTML = `
+      <div class="flex items-start gap-2.5 max-w-[90%]">
+        <div class="w-6 h-6 rounded-lg bg-cyan-600/30 text-cyan-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="bg-twin-cardInner text-slate-200 border border-slate-700/60 rounded-2xl rounded-tl-sm p-3.5 leading-relaxed shadow space-y-1.5 text-xs">
+          <p>
+            Conversation reset. Ask me anything about your finances, study metrics, or forward What-If projections!
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  function toggleExpandChat() {
+    const card = document.getElementById('chatAssistantCard');
+    const icon = document.getElementById('btn-expand-icon');
+    const messages = document.getElementById('chatMessages');
+    const backdrop = document.getElementById('chatBackdrop');
+    if (!card) return;
+
+    const isExpanded = card.classList.contains('fixed');
+    if (!isExpanded) {
+      card.classList.add('fixed', 'inset-4', 'md:inset-10', 'z-50', 'bg-slate-900/95', 'border', 'border-cyan-500/40', 'rounded-3xl', 'shadow-2xl', 'backdrop-blur-xl');
+      card.classList.remove('rounded-2xl');
+      if (messages) {
+        messages.classList.remove('h-[440px]', 'md:h-[460px]', 'max-h-[500px]');
+        messages.classList.add('flex-1', 'h-auto', 'max-h-none');
+      }
+      if (backdrop) backdrop.classList.remove('hidden');
+      if (icon) {
+        icon.classList.remove('fa-expand');
+        icon.classList.add('fa-compress');
+      }
+      document.body.classList.add('overflow-hidden');
+    } else {
+      card.classList.remove('fixed', 'inset-4', 'md:inset-10', 'z-50', 'bg-slate-900/95', 'border', 'border-cyan-500/40', 'rounded-3xl', 'shadow-2xl', 'backdrop-blur-xl');
+      card.classList.add('rounded-2xl');
+      if (messages) {
+        messages.classList.remove('flex-1', 'h-auto', 'max-h-none');
+        messages.classList.add('h-[440px]', 'md:h-[460px]', 'max-h-[500px]');
+      }
+      if (backdrop) backdrop.classList.add('hidden');
+      if (icon) {
+        icon.classList.remove('fa-compress');
+        icon.classList.add('fa-expand');
+      }
+      document.body.classList.remove('overflow-hidden');
+    }
+    if (messages) messages.scrollTop = messages.scrollHeight;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const card = document.getElementById('chatAssistantCard');
+      if (card && card.classList.contains('fixed')) {
+        toggleExpandChat();
+      }
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

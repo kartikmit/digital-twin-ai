@@ -1,0 +1,37 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Login - Digital Twin AI{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-twin-card border border-twin-border rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+    <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl"></div>
+
+    <div class="text-center mb-8">
+      <div class="inline-flex p-3 bg-cyan-500/10 rounded-2xl border border-cyan-500/30 text-cyan-400 mb-3">
+        <i class="fa-solid fa-fingerprint text-2xl"></i>
+      </div>
+      <h2 class="text-2xl font-black text-white">Digital Twin AI Terminal</h2>
+      <p class="text-xs text-slate-400 mt-1">Authenticate to synchronize personal telemetry</p>
+    </div>
+
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Username</label>
+        <input type="text" name="username" required class="w-full bg-slate-800/60 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500" placeholder="Username">
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Password</label>
+        <input type="password" name="password" required class="w-full bg-slate-800/60 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500" placeholder="••••••••">
+      </div>
+
+      <button type="submit" class="w-full mt-6 py-3.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition">
+        Authorize Session
+      </button>
+    </form>
+
+    <div class="text-center mt-6 text-xs text-slate-400">
+      Need a digital twin? <a href="{% url 'register' %}" class="text-cyan-400 font-bold hover:underline">Create Account</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

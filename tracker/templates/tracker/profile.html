@@ -1,0 +1,48 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Twin Profile Parameters - Digital Twin AI{% endblock %}
+{% block content %}
+<div class="p-6 md:p-8 max-w-4xl mx-auto w-full space-y-8">
+  <div class="bg-twin-card border border-twin-border rounded-2xl p-6 md:p-8">
+    <div class="flex items-center gap-4 pb-6 border-b border-slate-800 mb-6">
+      <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-2xl">
+        <i class="fa-solid fa-sliders"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-white">Digital Twin Profile Configuration</h2>
+        <p class="text-xs text-slate-400">Baseline parameters for behavioral simulations & AI forecasting</p>
+      </div>
+    </div>
+
+    <form method="POST" class="space-y-6">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Profession</label>
+          {{ form.profession }}
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Age</label>
+          {{ form.age }}
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Monthly Budget Target ($)</label>
+          {{ form.monthly_budget }}
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Weekly Target Study (Hours)</label>
+          {{ form.target_study_hours_weekly }}
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Bio / Behavioral Context</label>
+        {{ form.bio }}
+      </div>
+
+      <button type="submit" class="w-full md:w-auto px-8 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition">
+        Update Twin Baseline
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

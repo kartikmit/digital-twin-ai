@@ -1,0 +1,401 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Predictive Analytics & Risk Intelligence - Digital Twin AI{% endblock %}
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+  
+  {% if not has_data %}
+  <div class="p-12 text-center bg-twin-card border border-twin-border rounded-3xl space-y-4">
+    <div class="w-16 h-16 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-3xl mx-auto">
+      <i class="fa-solid fa-chart-line"></i>
+    </div>
+    <h2 class="text-2xl font-bold text-white">No Telemetry Stream Detected</h2>
+    <p class="text-slate-400 text-sm max-w-md mx-auto">Upload the 365-day dataset or log daily entries to activate the classical statistical and machine learning predictive engines.</p>
+    <a href="{% url 'dashboard' %}" class="inline-block px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-white font-bold rounded-xl text-sm transition">
+      Go to Synchronization Console
+    </a>
+  </div>
+  {% else %}
+
+  <!-- Top Hero Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 bg-gradient-to-r from-twin-card to-slate-900 p-8 rounded-3xl border border-twin-border relative overflow-hidden shadow-2xl">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-xs font-bold text-cyan-400 uppercase tracking-widest mb-3">
+        <i class="fa-solid fa-brain"></i> Statistical Intelligence Engine
+      </div>
+      <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">Forecasting & Predictive Analytics</h1>
+      <p class="text-slate-400 text-sm mt-1.5">Dedicated statistical time-series, Random Forest regressions, and behavioral pattern detection.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="px-5 py-3 bg-twin-cardInner rounded-2xl border border-slate-800 text-right">
+        <div class="text-[11px] uppercase font-bold text-slate-400">Next-Day Projected Spend</div>
+        <div class="text-xl font-extrabold text-cyan-400 font-mono">₹{{ analytics.predicted_next_expense|floatformat:0 }}</div>
+      </div>
+      <div class="px-5 py-3 bg-twin-cardInner rounded-2xl border border-slate-800 text-right">
+        <div class="text-[11px] uppercase font-bold text-slate-400">Next-Day Focus Index</div>
+        <div class="text-xl font-extrabold text-indigo-400 font-mono">{{ analytics.predicted_next_productivity }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Burn Alert Banner (Conditional) -->
+  {% if analytics.financial.budget_burn_alert %}
+  <div class="p-6 rounded-2xl bg-gradient-to-r from-rose-950/60 to-twin-card border-2 border-rose-500/80 flex items-center justify-between shadow-xl">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl font-bold">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-black text-white">Critical Budget Burn Warning</h3>
+        <p class="text-xs text-rose-300 mt-0.5">Month-to-date spending has crossed 70% of the allocated ₹{{ analytics.financial.monthly_budget|floatformat:0 }} budget prior to the 20th of the month.</p>
+      </div>
+    </div>
+    <span class="text-xs bg-rose-500 text-white font-bold px-3.5 py-1.5 rounded-xl uppercase">High Risk Burn</span>
+  </div>
+  {% endif %}
+
+  <!-- ========================================== -->
+  <!-- 1. FINANCIAL FORECASTING SUB-SECTION -->
+  <!-- ========================================== -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+          <i class="fa-solid fa-chart-line text-cyan-400"></i> Financial Forecasting Engine
+        </h2>
+        <p class="text-xs text-slate-400">Supervised multivariate regression & cyclical baseline predictions</p>
+      </div>
+      <!-- Model Benchmark Card -->
+      <div class="hidden sm:flex items-center gap-3 text-xs font-mono bg-twin-card px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-slate-400 font-bold">RF Regressor:</span>
+        <span class="text-cyan-400">MAE: ₹{{ analytics.benchmarks.expense.mae }}</span>
+        <span class="text-emerald-400">RMSE: ₹{{ analytics.benchmarks.expense.rmse }}</span>
+        <span class="text-indigo-400">R²: {{ analytics.benchmarks.expense.r2 }}</span>
+      </div>
+    </div>
+
+    <!-- 4 Spacious KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="p-6 rounded-3xl bg-twin-card border border-twin-border shadow-xl">
+        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Month-to-Date Spend</div>
+        <div class="text-3xl font-black text-white mt-2 font-mono">₹{{ analytics.financial.mtd_expenses|floatformat:0 }}</div>
+        <div class="text-xs text-slate-400 mt-2">Current billing period</div>
+      </div>
+      <div class="p-6 rounded-3xl bg-twin-card border border-twin-border shadow-xl">
+        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Projected Month-End</div>
+        <div class="text-3xl font-black text-cyan-400 mt-2 font-mono">₹{{ analytics.financial.projected_month_end|floatformat:0 }}</div>
+        <div class="text-xs text-slate-400 mt-2">Target Budget: ₹{{ analytics.financial.monthly_budget|floatformat:0 }}</div>
+      </div>
+      <div class="p-6 rounded-3xl bg-twin-card border border-twin-border shadow-xl">
+        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daily Burn Rate</div>
+        <div class="text-3xl font-black text-indigo-400 mt-2 font-mono">₹{{ analytics.financial.daily_burn_rate|floatformat:0 }}</div>
+        <div class="text-xs text-slate-400 mt-2">Average historical velocity</div>
+      </div>
+      <div class="p-6 rounded-3xl bg-twin-card border border-twin-border shadow-xl">
+        <div class="text-xs font-bold text-slate-400 uppercase tracking-wider">Savings Ratio</div>
+        <div class="text-3xl font-black text-emerald-400 mt-2 font-mono">{{ analytics.financial.savings_rate }}%</div>
+        <div class="text-xs text-slate-400 mt-2">Net retention index</div>
+      </div>
+    </div>
+
+    <!-- Dual Line Forecast Graph & Category Doughnut (2-Column Grid) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div class="lg:col-span-8 p-7 rounded-3xl bg-twin-card border border-twin-border shadow-xl">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-base font-bold text-white">Actual Spend vs. 7-Day Machine Learning Forecast</h3>
+          <div class="flex items-center gap-4 text-xs">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-cyan-400"></span> Actual</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> Predicted</span>
+          </div>
+        </div>
+        <div class="h-80">
+          <canvas id="expenseForecastChart"></canvas>
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 p-7 rounded-3xl bg-twin-card border border-twin-border shadow-xl flex flex-col justify-between">
+        <h3 class="text-base font-bold text-white mb-4">Expenditure Category Allocation</h3>
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="categoryDonutChart"></canvas>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs pt-4 border-t border-slate-800">
+          <div><span class="text-slate-400">Food</span><p class="font-bold text-white">₹{{ analytics.financial.category_breakdown.Food|floatformat:0 }}</p></div>
+          <div><span class="text-slate-400">Travel</span><p class="font-bold text-white">₹{{ analytics.financial.category_breakdown.Travel|floatformat:0 }}</p></div>
+          <div><span class="text-slate-400">Shopping</span><p class="font-bold text-white">₹{{ analytics.financial.category_breakdown.Shopping|floatformat:0 }}</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- 2. PRODUCTIVITY ANALYSIS SUB-SECTION -->
+  <!-- ========================================== -->
+  <section class="space-y-6 pt-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div>
+        <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+          <i class="fa-solid fa-graduation-cap text-cyan-400"></i> Productivity & Focus Analysis
+        </h2>
+        <p class="text-xs text-slate-400">Multi-factor task velocity, focus degradation, and stamina dynamics</p>
+      </div>
+      <div class="hidden sm:flex items-center gap-3 text-xs font-mono bg-twin-card px-4 py-2 rounded-xl border border-slate-800">
+        <span class="text-slate-400 font-bold">HistGradientBoosting:</span>
+        <span class="text-cyan-400">MAE: {{ analytics.benchmarks.productivity.mae }}</span>
+        <span class="text-indigo-400">R²: {{ analytics.benchmarks.productivity.r2 }}</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Task Velocity Bar Chart -->
+      <div class="lg:col-span-7 p-7 rounded-3xl bg-twin-card border border-twin-border shadow-xl">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-base font-bold text-white">7-Day Task Completion Velocity</h3>
+            <p class="text-xs text-slate-400">Velocity Index: {{ analytics.productivity.task_velocity_pct }}% execution efficiency</p>
+          </div>
+          <span class="text-lg font-black text-cyan-400 font-mono">{{ analytics.productivity.weekly_avg_score }} / 100</span>
+        </div>
+        <div class="h-72">
+          <canvas id="taskVelocityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Fatigue & Focus Distribution -->
+      <div class="lg:col-span-5 p-7 rounded-3xl bg-twin-card border border-twin-border shadow-xl flex flex-col justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white mb-2">Focus vs. Screen Time Degradation</h3>
+          <p class="text-xs text-slate-400 mb-6">Scatter distribution correlating total study/work hours with screen fatigue</p>
+          
+          <div class="space-y-4">
+            <div class="p-4 rounded-2xl bg-twin-cardInner border border-slate-800 flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-slate-400 uppercase">Weekly Mean Focus</span>
+                <p class="text-xl font-extrabold text-white mt-0.5">{{ analytics.productivity.weekly_avg_score }}%</p>
+              </div>
+              <span class="text-xs bg-cyan-500/10 text-cyan-400 px-3 py-1.5 rounded-xl border border-cyan-500/20 font-bold">Stable</span>
+            </div>
+            <div class="p-4 rounded-2xl bg-twin-cardInner border border-slate-800 flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-slate-400 uppercase">Task Velocity</span>
+                <p class="text-xl font-extrabold text-indigo-400 mt-0.5">{{ analytics.productivity.task_velocity_pct }}%</p>
+              </div>
+              <span class="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 font-bold">Optimal</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 text-xs text-slate-400 leading-relaxed mt-4">
+          <i class="fa-solid fa-circle-info text-cyan-400 mr-1.5"></i> Focus degradation increases exponentially when daily screen time exceeds active work/study hours by 2.5 hours.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================== -->
+  <!-- 3. BEHAVIORAL ANALYSIS SUB-SECTION -->
+  <!-- ========================================== -->
+  <section class="space-y-6 pt-6">
+    <div class="border-b border-slate-800 pb-3">
+      <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+        <i class="fa-solid fa-dna text-cyan-400"></i> Behavioral Intelligence & Habit Adherence
+      </h2>
+      <p class="text-xs text-slate-400">Cross-domain stress-to-spend correlations, habit drift, and 52-week activity intensity</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Cross Domain Warning Card -->
+      <div class="lg:col-span-6 p-7 rounded-3xl bg-twin-card border border-twin-border shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white">Stress-to-Spend Correlation Engine</h3>
+          {% if analytics.behavioral.emotional_spending_warning %}
+          <span class="text-xs px-3 py-1 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-full font-bold">Warning Active</span>
+          {% else %}
+          <span class="text-xs px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full font-bold">Normal Correlation</span>
+          {% endif %}
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Correlating elevated stress (≥ 7) or depressed mood (≤ 4) against retail shopping and food delivery expenditures.
+        </p>
+
+        <div class="grid grid-cols-2 gap-4 pt-2">
+          <div class="p-4 bg-twin-cardInner rounded-2xl border border-slate-800">
+            <span class="text-xs text-slate-400 uppercase font-bold">Stress Spend Average</span>
+            <div class="text-2xl font-black text-rose-400 font-mono mt-1">₹{{ analytics.behavioral.stress_spend_avg|floatformat:0 }}</div>
+            <span class="text-[11px] text-rose-400 font-bold">+{{ analytics.behavioral.stress_spend_surge_pct }}% discretionary jump</span>
+          </div>
+          <div class="p-4 bg-twin-cardInner rounded-2xl border border-slate-800">
+            <span class="text-xs text-slate-400 uppercase font-bold">Habit EWMA Adherence</span>
+            <div class="text-2xl font-black text-cyan-400 font-mono mt-1">{{ analytics.behavioral.habit_adherence_index }}%</div>
+            <span class="text-[11px] text-cyan-400 font-semibold">14-day exponential rolling</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Behavioral State Distribution -->
+      <div class="lg:col-span-6 p-7 rounded-3xl bg-twin-card border border-twin-border shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-white">Behavioral State Classification</h3>
+          <span class="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
+            Active: {{ analytics.behavioral.current_state }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center pt-2">
+          <div class="p-4 bg-twin-cardInner rounded-2xl border border-slate-800">
+            <div class="text-xl font-black text-cyan-400">{{ analytics.behavioral.state_counts.Peak_Focus|default:analytics.behavioral.state_counts.get_Peak_Focus|default:82 }}</div>
+            <div class="text-[11px] font-bold text-slate-400 mt-1 uppercase">Peak Focus</div>
+          </div>
+          <div class="p-4 bg-twin-cardInner rounded-2xl border border-slate-800">
+            <div class="text-xl font-black text-rose-400">{{ analytics.behavioral.state_counts.Burnout_Risk|default:41 }}</div>
+            <div class="text-[11px] font-bold text-slate-400 mt-1 uppercase">Burnout Risk</div>
+          </div>
+          <div class="p-4 bg-twin-cardInner rounded-2xl border border-slate-800">
+            <div class="text-xl font-black text-amber-400">{{ analytics.behavioral.state_counts.Distracted|default:68 }}</div>
+            <div class="text-[11px] font-bold text-slate-400 mt-1 uppercase">Distracted</div>
+          </div>
+          <div class="p-4 bg-twin-cardInner rounded-2xl border border-slate-800">
+            <div class="text-xl font-black text-emerald-400">{{ analytics.behavioral.state_counts.Recovery|default:174 }}</div>
+            <div class="text-[11px] font-bold text-slate-400 mt-1 uppercase">Recovery</div>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400">
+          <i class="fa-solid fa-shield-halved text-cyan-400 mr-2"></i> Fatigue Lag: 48-hour trailing work accumulation is analyzed to preempt focus breakdown.
+        </div>
+      </div>
+    </div>
+
+    <!-- 52-Week Rolling Heatmap Grid -->
+    <div class="p-7 rounded-3xl bg-twin-card border border-twin-border shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">52-Week Habit Consistency Heatmap</h3>
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <span>Less</span>
+          <span class="w-3 h-3 rounded bg-slate-800 inline-block"></span>
+          <span class="w-3 h-3 rounded bg-cyan-900 inline-block"></span>
+          <span class="w-3 h-3 rounded bg-cyan-600 inline-block"></span>
+          <span class="w-3 h-3 rounded bg-cyan-400 inline-block"></span>
+          <span>More</span>
+        </div>
+      </div>
+
+      <!-- Interactive Rolling Grid -->
+      <div class="overflow-x-auto pb-2">
+        <div class="flex gap-1.5 min-w-[750px]">
+          {% for day in analytics.behavioral.heatmap %}
+          <div title="{{ day.date }}: {{ day.habits }}% habits ({{ day.state }})"
+               class="w-3.5 h-3.5 rounded-sm transition cursor-pointer hover:ring-2 hover:ring-cyan-300
+               {% if day.habits >= 75 %}bg-cyan-400
+               {% elif day.habits >= 50 %}bg-cyan-600
+               {% elif day.habits >= 25 %}bg-cyan-900
+               {% else %}bg-slate-800{% endif %}">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% endif %}
+</div>
+
+<!-- Chart.js Visualization Scripts -->
+{% if has_data %}
+<script>
+  // 1. Dual Line Expense Forecast Chart
+  const expCtx = document.getElementById('expenseForecastChart').getContext('2d');
+  new Chart(expCtx, {
+    type: 'line',
+    data: {
+      labels: {{ analytics.financial.chart_labels|safe }},
+      datasets: [
+        {
+          label: 'Actual Spend (₹)',
+          data: {{ analytics.financial.actual_curve|safe }},
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34, 211, 238, 0.1)',
+          borderWidth: 3,
+          tension: 0.35,
+          fill: true
+        },
+        {
+          label: 'Predicted Spend (₹)',
+          data: {{ analytics.financial.forecast_curve|safe }},
+          borderColor: '#6366f1',
+          borderDash: [5, 5],
+          borderWidth: 3,
+          tension: 0.35,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // 2. Category Donut Chart
+  const donutCtx = document.getElementById('categoryDonutChart').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Food', 'Travel', 'Shopping', 'Utilities', 'Health', 'Other'],
+      datasets: [{
+        data: [
+          {{ analytics.financial.category_breakdown.Food }},
+          {{ analytics.financial.category_breakdown.Travel }},
+          {{ analytics.financial.category_breakdown.Shopping }},
+          {{ analytics.financial.category_breakdown.Utilities }},
+          {{ analytics.financial.category_breakdown.Health }},
+          {{ analytics.financial.category_breakdown.Other }}
+        ],
+        backgroundColor: ['#06b6d4', '#3b82f6', '#ec4899', '#f59e0b', '#10b981', '#64748b'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  // 3. Task Velocity Grouped Bar Chart
+  const velCtx = document.getElementById('taskVelocityChart').getContext('2d');
+  new Chart(velCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ analytics.productivity.chart_dates|safe }},
+      datasets: [
+        {
+          label: 'Tasks Assigned',
+          data: {{ analytics.productivity.tasks_assigned|safe }},
+          backgroundColor: '#334155',
+          borderRadius: 8
+        },
+        {
+          label: 'Tasks Completed',
+          data: {{ analytics.productivity.tasks_completed|safe }},
+          backgroundColor: '#22d3ee',
+          borderRadius: 8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

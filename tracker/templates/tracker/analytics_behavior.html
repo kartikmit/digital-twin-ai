@@ -1,0 +1,219 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Behavioral & Habits - Digital Twin AI{% endblock %}
+{% block content %}
+<div class="p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6">
+
+  <!-- Header Banner -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-twin-card to-slate-900 p-6 rounded-2xl border border-twin-border shadow-xl">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/30 rounded-full text-[11px] font-bold text-rose-400 uppercase tracking-widest mb-2">
+        <i class="fa-solid fa-dna"></i> Behavioral Pattern Detection
+      </div>
+      <h1 class="text-2xl font-black text-white tracking-tight">Behavioral & Habit Intelligence</h1>
+      <p class="text-slate-400 text-xs mt-1">Cross-domain stress-to-spend correlations, habit drift, and 52-week activity intensity.</p>
+    </div>
+    {% if has_data %}
+    <span class="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-3 py-1.5 rounded-lg border border-cyan-500/20">
+      Active State: {{ analytics.behavioral.current_state }}
+    </span>
+    {% endif %}
+  </div>
+
+  {% if not has_data %}
+  <div class="p-8 text-center bg-twin-card border border-twin-border rounded-2xl space-y-3">
+    <p class="text-slate-400 text-xs">No telemetry data recorded yet. Please upload data on the Telemetry Hub to activate analysis.</p>
+    <a href="{% url 'dashboard' %}" class="inline-block px-4 py-2 bg-cyan-500 text-white rounded-lg text-xs font-bold">Go to Hub</a>
+  </div>
+  {% else %}
+
+  <!-- Row 1: Stress-Spend Surge & State Distribution -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="lg:col-span-6 p-5 rounded-2xl bg-twin-card border border-twin-border shadow space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-bold text-white">Stress-to-Spend Correlation</h3>
+          <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono font-bold">Descriptive Telemetry Analysis</span>
+        </div>
+        {% if analytics.behavioral.emotional_spending_warning %}
+        <span class="text-[10px] px-2.5 py-0.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-full font-bold">Surge Active</span>
+        {% else %}
+        <span class="text-[10px] px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-full font-bold">Normal</span>
+        {% endif %}
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Analyzes dining and retail purchases when daily stress is elevated (≥ 7) or mood is low (≤ 4).
+      </p>
+
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <div class="p-3 bg-twin-cardInner rounded-xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 uppercase font-bold">Stress Spend Average</span>
+          <div class="text-xl font-black text-rose-400 font-mono mt-0.5">₹{{ analytics.behavioral.stress_spend_avg|floatformat:0 }}</div>
+          <span class="text-[10px] text-rose-400 font-bold">+{{ analytics.behavioral.stress_spend_surge_pct }}% surge</span>
+        </div>
+        <div class="p-3 bg-twin-cardInner rounded-xl border border-slate-800">
+          <span class="text-[10px] text-slate-400 uppercase font-bold">Habit EWMA Adherence</span>
+          <div class="text-xl font-black text-cyan-400 font-mono mt-0.5">{{ analytics.behavioral.habit_adherence_index }}%</div>
+          <span class="text-[10px] text-cyan-400 font-medium">14-day exponential</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- State Distribution Donut -->
+    <div class="lg:col-span-6 p-5 rounded-2xl bg-twin-card border border-twin-border shadow flex flex-col justify-between">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-bold text-white">Behavioral State Distribution</h3>
+        <span class="text-[11px] text-slate-400">Classified days</span>
+      </div>
+      <div class="h-44 flex items-center justify-center">
+        <canvas id="stateChart"></canvas>
+      </div>
+      <div class="grid grid-cols-4 gap-2 text-center text-xs pt-3 border-t border-slate-800">
+        <div><span class="text-slate-400 text-[9px]">Peak Focus</span><p class="font-bold text-cyan-400">{{ analytics.behavioral.state_counts.peak_focus }}</p></div>
+        <div><span class="text-slate-400 text-[9px]">Burnout</span><p class="font-bold text-rose-400">{{ analytics.behavioral.state_counts.burnout_risk }}</p></div>
+        <div><span class="text-slate-400 text-[9px]">Distracted</span><p class="font-bold text-amber-400">{{ analytics.behavioral.state_counts.distracted }}</p></div>
+        <div><span class="text-slate-400 text-[9px]">Recovery</span><p class="font-bold text-emerald-400">{{ analytics.behavioral.state_counts.recovery }}</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: 5-Axis Lifestyle Radar & Stress vs Discretionary Curve -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="lg:col-span-6 p-5 rounded-2xl bg-twin-card border border-twin-border shadow">
+      <h3 class="text-sm font-bold text-white mb-1">5-Axis Lifestyle & Habit Balance</h3>
+      <p class="text-[11px] text-slate-400 mb-2">Multi-dimensional habit execution radar</p>
+      <div class="h-64 flex items-center justify-center">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+    <div class="lg:col-span-6 p-5 rounded-2xl bg-twin-card border border-twin-border shadow">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="text-sm font-bold text-white">Stress Level vs. Discretionary Spending</h3>
+        <span class="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded font-bold font-mono">Trailing 30-Day Historical Trend</span>
+      </div>
+      <p class="text-[11px] text-slate-400 mb-2">Trailing 30-day correlation curve</p>
+      <div class="h-64">
+        <canvas id="stressSpendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 52-Week Rolling Heatmap Grid -->
+  <div class="p-5 rounded-2xl bg-twin-card border border-twin-border shadow space-y-3">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-bold text-white">52-Week Habit Consistency Grid</h3>
+        <p class="text-[11px] text-slate-400">Chronological daily habit execution index</p>
+      </div>
+      <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+        <span>Less</span>
+        <span class="w-2.5 h-2.5 rounded bg-slate-800 inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded bg-cyan-900 inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded bg-cyan-600 inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded bg-cyan-400 inline-block"></span>
+        <span>More</span>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto pb-2">
+      <div class="grid grid-rows-7 grid-flow-col gap-1 w-max">
+        {% for day in analytics.behavioral.heatmap %}
+        <div title="{{ day.date }}: {{ day.habits }}% habits ({{ day.state }})"
+             class="w-3 h-3 rounded-sm transition cursor-pointer hover:ring-2 hover:ring-cyan-300
+             {% if day.habits >= 75 %}bg-cyan-400
+             {% elif day.habits >= 50 %}bg-cyan-600
+             {% elif day.habits >= 25 %}bg-cyan-900
+             {% else %}bg-slate-800{% endif %}">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Behavioral State Doughnut
+    new Chart(document.getElementById('stateChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Peak Focus', 'Burnout Risk', 'Distracted', 'Recovery'],
+        datasets: [{
+          data: {{ analytics.behavioral.state_counts_json|safe }},
+          backgroundColor: ['#22d3ee', '#f43f5e', '#fbbf24', '#10b981'],
+          borderWidth: 0
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+
+    // 2. 5-Axis Radar Chart
+    new Chart(document.getElementById('radarChart').getContext('2d'), {
+      type: 'radar',
+      data: {
+        labels: {{ analytics.behavioral.radar_labels_json|safe }},
+        datasets: [{
+          label: 'Habit Adherence Score',
+          data: {{ analytics.behavioral.radar_values_json|safe }},
+          borderColor: '#22d3ee',
+          backgroundColor: 'rgba(34, 211, 238, 0.15)',
+          borderWidth: 2,
+          pointBackgroundColor: '#22d3ee'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            grid: { color: '#1e293b' },
+            angleLines: { color: '#1e293b' },
+            ticks: { display: false },
+            pointLabels: { color: '#94a3b8', font: { size: 10 } },
+            suggestedMin: 0,
+            suggestedMax: 100
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // 3. Stress vs Discretionary Spend Curve
+    new Chart(document.getElementById('stressSpendChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: {{ analytics.behavioral.chart_dates_30_json|safe }},
+        datasets: [
+          {
+            label: 'Discretionary Spend (₹)',
+            data: {{ analytics.behavioral.discretionary_spend_30_json|safe }},
+            borderColor: '#f43f5e',
+            backgroundColor: 'rgba(244, 63, 94, 0.08)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Stress Level (1-10)',
+            data: {{ analytics.behavioral.stress_30_json|safe }},
+            borderColor: '#fbbf24',
+            borderWidth: 2,
+            borderDash: [4, 4],
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { position: 'left', grid: { color: '#1e293b' }, ticks: { color: '#f43f5e', font: { size: 10 } } },
+          y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#fbbf24', font: { size: 10 } } },
+          x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+        },
+        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } }
+      }
+    });
+  </script>
+  {% endif %}
+</div>
+{% endblock %}

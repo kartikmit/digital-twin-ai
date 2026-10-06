@@ -1,0 +1,38 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Register - Digital Twin AI{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-twin-card border border-twin-border rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+    <div class="absolute -top-20 -right-20 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl"></div>
+    
+    <div class="text-center mb-8">
+      <div class="inline-flex p-3 bg-cyan-500/10 rounded-2xl border border-cyan-500/30 text-cyan-400 mb-3">
+        <i class="fa-solid fa-dna text-2xl"></i>
+      </div>
+      <h2 class="text-2xl font-black text-white">Create Your Digital Twin</h2>
+      <p class="text-xs text-slate-400 mt-1">Initialize user profile & behavioral telemetry</p>
+    </div>
+
+    <form method="POST" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <p class="text-xs text-red-400 mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <button type="submit" class="w-full mt-6 py-3.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition">
+        Initialize Digital Twin
+      </button>
+    </form>
+
+    <div class="text-center mt-6 text-xs text-slate-400">
+      Already registered? <a href="{% url 'login' %}" class="text-cyan-400 font-bold hover:underline">Access Terminal</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

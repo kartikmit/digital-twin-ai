@@ -1,0 +1,6 @@
+entry_date,day_of_week,income,food_expenses,travel_expenses,shopping_expenses,utilities_expenses,health_expenses,other_expenses,total_expenses,savings,work_hours,study_hours,break_minutes,screen_time_hours,tasks_assigned,tasks_completed,productivity_score,steps_count,exercise_duration_min,sleep_hours,reading_meditation_min,habit_completion_pct,stress_level,mood_score,behavioral_state,next_day_expenses,next_day_productivity
+2026-09-09,Wednesday,0.0,439.0,162.21,0.0,0.0,0.0,100.0,701.21,-701.21,9.6,1.5,39,12.0,9,8,75.82,6213,30,6.4,0,50.0,6,5,Burnout Risk,712.25,76.41
+2026-09-10,Thursday,0.0,465.84,146.41,0.0,0.0,0.0,100.0,712.25,-712.25,7.7,1.8,42,10.8,8,7,76.41,6183,30,6.8,20,75.0,5,6,Peak Focus,714.3,75.6
+2026-09-11,Friday,0.0,458.17,156.13,0.0,0.0,0.0,100.0,714.3,-714.3,7.4,1.6,43,10.4,8,7,75.6,5908,30,6.6,20,75.0,5,6,Peak Focus,4799.34,70.64
+2026-09-12,Saturday,0.0,1583.65,0.0,2965.69,0.0,0.0,250.0,4799.34,-4799.34,0.3,1.6,118,6.5,3,3,70.64,8172,45,8.1,30,100.0,2,8,Recovery,4716.82,71.16
+2026-09-13,Sunday,0.0,1570.99,0.0,2895.83,0.0,0.0,250.0,4716.82,-4716.82,0.2,1.8,125,6.0,3,3,71.16,8457,45,8.0,30,100.0,2,8,Recovery,720.0,72.0

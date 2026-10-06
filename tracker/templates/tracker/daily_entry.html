@@ -1,0 +1,146 @@
+{% extends 'tracker/base.html' %}
+{% block title %}Daily Telemetry Entry - Digital Twin AI{% endblock %}
+{% block content %}
+<div class="p-6 max-w-5xl mx-auto w-full space-y-6">
+  <div class="bg-twin-card border border-twin-border rounded-2xl p-6 md:p-8 shadow-xl">
+    <div class="flex items-center gap-4 pb-4 border-b border-slate-800 mb-6">
+      <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl font-bold">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-white">Daily Multi-Domain Telemetry Log</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Submit daily expenditures, study sessions, and wellness metrics</p>
+      </div>
+    </div>
+
+    <form method="POST" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Temporal Coordinates -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-calendar"></i> Temporal Coordinates
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Entry Date</label>
+            {{ form.entry_date }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Day of Week</label>
+            {{ form.day_of_week }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Domain -->
+      <div class="pt-4 border-t border-slate-800">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-wallet"></i> Financial Expenditures (₹ INR)
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Extra / Freelance Inflow (Optional)</label>
+            <span class="text-[10px] text-slate-500 block mb-1">Leave ₹0 if no ad-hoc income today</span>
+            {{ form.income }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Food Expenses</label>
+            {{ form.food_expenses }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Travel Expenses</label>
+            {{ form.travel_expenses }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Shopping Expenses</label>
+            {{ form.shopping_expenses }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Utilities Expenses</label>
+            {{ form.utilities_expenses }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Health / Other</label>
+            {{ form.health_expenses }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Productivity Domain -->
+      <div class="pt-4 border-t border-slate-800">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-laptop-code"></i> Productivity & Focus Hours
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Work Hours</label>
+            {{ form.work_hours }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Study Hours</label>
+            {{ form.study_hours }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Break Minutes</label>
+            {{ form.break_minutes }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Screen Time (Hours)</label>
+            {{ form.screen_time_hours }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tasks Assigned</label>
+            {{ form.tasks_assigned }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Tasks Completed</label>
+            {{ form.tasks_completed }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Behavioral & Wellness Domain -->
+      <div class="pt-4 border-t border-slate-800">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-heart-pulse"></i> Lifestyle, Habits & Biometrics
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Sleep Hours</label>
+            {{ form.sleep_hours }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Exercise (Mins)</label>
+            {{ form.exercise_duration_min }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Steps Count</label>
+            {{ form.steps_count }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Meditation (Mins)</label>
+            {{ form.reading_meditation_min }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Habits Done (%)</label>
+            {{ form.habit_completion_pct }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Stress (1-10)</label>
+            {{ form.stress_level }}
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Mood (1-10)</label>
+            {{ form.mood_score }}
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold rounded-xl shadow text-sm transition">
+        Commit Daily Record & Update Models
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
