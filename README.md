@@ -10,7 +10,31 @@ An integrated Python/Django application that creates a synchronized computationa
 
 ## Local Setup & Installation
 
-**1. Clone the Repository**
+> ⚠️ **Important Note on API Keys:** 
+> The conversational AI features of this project require a Groq API key to function. For security reasons, API keys are not committed to this repository. You can obtain a free API key by creating an account on the [Groq Cloud Console](https://console.groq.com/). You will need to create a `.env` file to store this key as shown in Step 2.
+
+**1. Clone the Repository & Install Dependencies**
+Open your terminal, clone the project, and install the required Python packages:
 ```bash
-git clone [https://github.com/](https://github.com/)[Your-Username]/digital-twin-ai.git
+git clone [https://github.com/kartikmit/digital-twin-ai.git](https://github.com/kartikmit/digital-twin-ai.git)
 cd digital-twin-ai
+pip install -r requirements.txt
+```
+
+**2. Configure the API Key**
+Create a new file named exactly `.env` in the root directory of the project (the exact same folder where `manage.py` is located) and add your Groq API key using the exact variable name shown below:
+```text
+GROQ_API_KEY=your_actual_api_key_here
+```
+
+**3. Initialize the Database**
+Run the migration command to construct the required database tables locally:
+```bash
+python manage.py migrate
+```
+
+**4. Start the Server**
+```bash
+python manage.py runserver
+```
+
